@@ -214,12 +214,25 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                 <div className="color-input-picker-box">
                   <input
                     type="color"
+                    disabled={!!(selectedWidget as any).rainbow}
                     value={(selectedWidget as any).color}
                     onChange={(e) => handleChange('color', e.target.value)}
                     className="color-picker-input-native"
+                    style={{ opacity: (selectedWidget as any).rainbow ? 0.5 : 1 }}
                   />
-                  <span style={{ fontSize: '11px', fontFamily: 'monospace', color: 'var(--text-muted)' }}>{(selectedWidget as any).color}</span>
+                  <span style={{ fontSize: '11px', fontFamily: 'monospace', color: 'var(--text-muted)' }}>{(selectedWidget as any).rainbow ? 'Rainbow' : (selectedWidget as any).color}</span>
                 </div>
+              </div>
+
+              <div className="prop-field" style={{ flexDirection: 'row', alignItems: 'center', gap: '8px', marginTop: '4px', marginBottom: '10px' }}>
+                <input
+                  type="checkbox"
+                  id={`rainbow-text-checkbox-${selectedWidget.id}`}
+                  checked={!!(selectedWidget as any).rainbow}
+                  onChange={(e) => handleChange('rainbow', e.target.checked)}
+                  style={{ cursor: 'pointer', width: '16px', height: '16px' }}
+                />
+                <label htmlFor={`rainbow-text-checkbox-${selectedWidget.id}`} className="prop-label" style={{ margin: 0, cursor: 'pointer' }}>Rainbow Color Mode</label>
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', borderTop: '1px solid rgba(0,0,0,0.03)', paddingTop: '10px' }}>

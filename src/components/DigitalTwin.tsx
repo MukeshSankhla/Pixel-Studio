@@ -451,7 +451,8 @@ export const DigitalTwin: React.FC<DigitalTwinProps> = ({
         shadowColor: string,
         effect: string,
         speed: number,
-        fontFamily: string
+        fontFamily: string,
+        rainbow?: boolean
       ) => {
         const isTiny = fontSize === 0;
         // GFX size multiplier (1, 2, etc.)
@@ -495,7 +496,7 @@ export const DigitalTwin: React.FC<DigitalTwinProps> = ({
         };
 
         // Draw function for a whole character
-        const drawChar = (bytes: number[], startX: number, startY: number, plotColor: string, alpha: number) => {
+        const drawChar = (bytes: number[], startX: number, startY: number, plotColor: string, alpha: number, isShadow: boolean) => {
           const numCols = isTiny ? 3 : 5;
           const numRows = isTiny ? 5 : 8;
           const scale = isTiny ? 1 : size;
@@ -509,12 +510,18 @@ export const DigitalTwin: React.FC<DigitalTwinProps> = ({
                     const px = Math.floor(startX + col * scale + sx);
                     const py = Math.floor(startY + row * scale + sy);
 
+                    let pixelColor = plotColor;
+                    if (rainbow && !isShadow) {
+                      const hue = (tick * 8 + px * 4) % 360;
+                      pixelColor = `hsl(${hue}, 100%, 50%)`;
+                    }
+
                     // Draw primary pixel
-                    drawPixelBlock(px, py, plotColor, alpha);
+                    drawPixelBlock(px, py, pixelColor, alpha);
 
                     // Classic Bold: 2-pixel thickness/stroke (double draw horizontally)
                     if (fontFamily === 'bold') {
-                      drawPixelBlock(px + 1, py, plotColor, alpha);
+                      drawPixelBlock(px + 1, py, pixelColor, alpha);
                     }
                   }
                 }
@@ -563,7 +570,7 @@ export const DigitalTwin: React.FC<DigitalTwinProps> = ({
               finalAlpha = 0.2 + 0.8 * Math.abs(Math.sin(tick * 0.15));
             }
 
-            drawChar(bytes, startX, startY, actualShadowColor, finalAlpha);
+            drawChar(bytes, startX, startY, actualShadowColor, finalAlpha, true);
           }
         }
 
@@ -599,7 +606,7 @@ export const DigitalTwin: React.FC<DigitalTwinProps> = ({
             }
           }
 
-          drawChar(bytes, startX, startY, charColor, finalAlpha);
+          drawChar(bytes, startX, startY, charColor, finalAlpha, false);
         }
       };
 
@@ -618,7 +625,8 @@ export const DigitalTwin: React.FC<DigitalTwinProps> = ({
           txt.shadowColorMode === 'custom' ? txt.shadowColor : 'auto',
           txt.scrollEffect,
           txt.scrollSpeed,
-          txt.fontFamily
+          txt.fontFamily,
+          (txt as any).rainbow
         );
       }
 

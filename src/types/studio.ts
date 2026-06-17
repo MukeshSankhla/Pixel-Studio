@@ -36,6 +36,7 @@ export interface TextWidget extends BaseWidget {
   scrollSpeed: number; // 1 to 10
   color: string;
   fontFamily: 'standard' | 'bold' | 'retro' | 'pixel';
+  rainbow?: boolean;
 }
 
 export interface StickerWidget extends BaseWidget {

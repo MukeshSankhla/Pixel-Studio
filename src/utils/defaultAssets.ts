@@ -602,18 +602,6 @@ export const DEFAULT_SCENES: Scene[] = [
     createdAt: Date.now(),
     widgets: [
       {
-        id: 'bg-boot',
-        type: 'background',
-        name: 'Midnight Background',
-        x: 0,
-        y: 0,
-        width: 80,
-        height: 16,
-        zIndex: 0,
-        bgType: 'solid',
-        colors: ['#030712']
-      },
-      {
         id: 'text-boot',
         type: 'text',
         name: 'Boot Text',
@@ -627,10 +615,11 @@ export const DEFAULT_SCENES: Scene[] = [
         shadow: false,
         shadowColor: '#000000',
         alignment: 'center',
-        scrollEffect: 'shimmer',
+        scrollEffect: 'none',
         scrollSpeed: 4,
-        color: '#6366f1',
-        fontFamily: 'bold'
+        color: '#ffffff',
+        fontFamily: 'standard',
+        rainbow: true
       }
     ]
   }
