@@ -1263,7 +1263,7 @@ export default function App() {
       <header className="glass-panel app-header">
         <div className="logo-section">
           <img
-            src="/favicon.svg"
+            src={`${import.meta.env.BASE_URL}favicon.svg`}
             alt="Pixel Studio Logo"
             style={{
               width: '38px',

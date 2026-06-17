@@ -597,12 +597,12 @@ export const DEFAULT_ANIMATIONS: AnimationPreset[] = [
 
 export const DEFAULT_SCENES: Scene[] = [
   {
-    id: 'scene-welcome',
-    name: 'Welcome Signboard',
+    id: 'scene-boot',
+    name: 'Boot Animation',
     createdAt: Date.now(),
     widgets: [
       {
-        id: 'bg-1',
+        id: 'bg-boot',
         type: 'background',
         name: 'Midnight Background',
         x: 0,
@@ -610,116 +610,27 @@ export const DEFAULT_SCENES: Scene[] = [
         width: 80,
         height: 16,
         zIndex: 0,
-        bgType: 'gradient',
-        colors: ['#1e1b4b', '#030712'],
-        animationEffect: 'none'
+        bgType: 'solid',
+        colors: ['#030712']
       },
       {
-        id: 'text-1',
+        id: 'text-boot',
         type: 'text',
-        name: 'Welcome Text',
-        x: 10,
+        name: 'Boot Text',
+        x: 13,
         y: 4,
-        width: 60,
+        width: 54,
         height: 8,
-        zIndex: 2,
-        text: 'HELLO WORLD',
+        zIndex: 1,
+        text: 'PIXEL BAR',
         fontSize: 1,
         shadow: false,
         shadowColor: '#000000',
         alignment: 'center',
-        scrollEffect: 'bounce',
+        scrollEffect: 'shimmer',
         scrollSpeed: 4,
         color: '#6366f1',
         fontFamily: 'bold'
-      },
-      {
-        id: 'sticker-1',
-        type: 'sticker',
-        name: 'Left Heart',
-        x: 1,
-        y: 4,
-        width: 8,
-        height: 8,
-        zIndex: 1,
-        stickerId: 'heart-8',
-        pixelData: getHeartPixels()
-      },
-      {
-        id: 'sticker-2',
-        type: 'sticker',
-        name: 'Right Heart',
-        x: 71,
-        y: 4,
-        width: 8,
-        height: 8,
-        zIndex: 1,
-        stickerId: 'heart-8',
-        pixelData: getHeartPixels()
-      }
-    ]
-  },
-  {
-    id: 'scene-clock-weather',
-    name: 'Smart Desk Clock',
-    createdAt: Date.now(),
-    widgets: [
-      {
-        id: 'bg-clock',
-        type: 'background',
-        name: 'Soft Gradient',
-        x: 0,
-        y: 0,
-        width: 80,
-        height: 16,
-        zIndex: 0,
-        bgType: 'solid',
-        colors: ['#0f172a']
-      },
-      {
-        id: 'time-widget',
-        type: 'time',
-        name: 'Current Time',
-        x: 4,
-        y: 4,
-        width: 32,
-        height: 8,
-        zIndex: 1,
-        format: 'HH:MM',
-        color: '#10b981',
-        shadow: false,
-        shadowColor: '#000000',
-        fontSize: 1,
-        scrollEffect: 'none',
-        fontFamily: 'bold'
-      },
-      {
-        id: 'weather-widget',
-        type: 'weather-temp',
-        name: 'Temperature display',
-        x: 42,
-        y: 4,
-        width: 30,
-        height: 8,
-        zIndex: 1,
-        color: '#f59e0b',
-        shadow: false,
-        shadowColor: '#000000',
-        fontSize: 1,
-        scrollEffect: 'none',
-        fontFamily: 'standard'
-      },
-      {
-        id: 'sticker-weather',
-        type: 'sticker',
-        name: 'Sun Icon',
-        x: 32,
-        y: 4,
-        width: 8,
-        height: 8,
-        zIndex: 1,
-        stickerId: 'sun-8',
-        pixelData: getSunPixels()
       }
     ]
   }

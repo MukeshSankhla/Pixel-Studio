@@ -1509,7 +1509,7 @@ export const DigitalTwin: React.FC<DigitalTwinProps> = ({
           width: '100%',
           maxWidth: 'auto',
           aspectRatio: '2048 / 445',
-          backgroundImage: 'url("/Pixel_Bar.png")',
+          backgroundImage: `url("${import.meta.env.BASE_URL}Pixel_Bar.png")`,
           backgroundSize: '100% 345.17%',
           backgroundRepeat: 'no-repeat',
           backgroundPosition: '0% 59.12%',
