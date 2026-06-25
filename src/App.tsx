@@ -50,44 +50,7 @@ import { db } from './firebase';
 import { collection, addDoc } from 'firebase/firestore';
 import confetti from 'canvas-confetti';
 
-const TIMEZONES = [
-  { label: 'India / New Delhi (IST)', value: 'IST-5:30' },
-  { label: 'China / Beijing / Shanghai (CST)', value: 'CST-8' },
-  { label: 'Taiwan / Taipei (CST)', value: 'CST-8' },
-  { label: 'Singapore / Malaysia / Hong Kong (SGT/HKT)', value: 'CST-8' },
-  { label: 'Philippines / Manila (PHT)', value: 'PHT-8' },
-  { label: 'Japan / South Korea: Tokyo / Seoul (JST/KST)', value: 'JST-9' },
-  { label: 'Thailand / Vietnam / Indonesia: Bangkok / Jakarta (ICT)', value: 'ICT-7' },
-  { label: 'Nepal / Kathmandu (NPT)', value: 'NPT-5:45' },
-  { label: 'Bangladesh / Dhaka (BST)', value: 'BST-6' },
-  { label: 'Pakistan / Karachi (PKT)', value: 'PKT-5' },
-  { label: 'United Kingdom: London (GMT/BST)', value: 'GMT0BST,M3.5.0/2,M10.5.0/2' },
-  { label: 'Germany / France / Italy: Berlin / Paris / Rome (CET/CEST)', value: 'CET-1CEST,M3.5.0,M10.5.0/3' },
-  { label: 'Romania / Greece / Ukraine / Turkey: Athens / Istanbul (EET/EEST)', value: 'EET-2EEST,M3.5.0,M10.5.0/3' },
-  { label: 'Saudi Arabia / Russia: Moscow / Riyadh (MSK/AST)', value: 'MSK-3' },
-  { label: 'Russia: Samara (SAMT)', value: 'SAMT-4' },
-  { label: 'Russia: Yekaterinburg (YEKT)', value: 'YEKT-5' },
-  { label: 'Russia: Omsk / Novosibirsk (OMST/NOVT)', value: 'OMST-6' },
-  { label: 'Russia: Vladivostok / Yakutsk (VLAT/YAKT)', value: 'VLAT-10' },
-  { label: 'UAE / Dubai / Abu Dhabi (GST)', value: 'GST-4' },
-  { label: 'Iran / Tehran (IRST)', value: 'IRST-3:30' },
-  { label: 'Australia Eastern: Sydney / Melbourne (AEST/AEDT)', value: 'AEST-10AEDT,M10.1.0,M4.1.0/3' },
-  { label: 'Australia Western: Perth (AWST)', value: 'AWST-8' },
-  { label: 'New Zealand / Auckland (NZST/NZDT)', value: 'NZST-12NZDT,M9.5.0/2,M4.5.0/3' },
-  { label: 'USA Eastern: New York / Miami (EST/EDT)', value: 'EST5EDT,M3.2.0,M11.1.0' },
-  { label: 'USA Central: Chicago / Houston (CST/CDT)', value: 'CST6CDT,M3.2.0,M11.1.0' },
-  { label: 'USA Mountain: Denver / Phoenix (MST/MDT)', value: 'MST7MDT,M3.2.0,M11.1.0' },
-  { label: 'USA Pacific: Los Angeles / Seattle (PST/PDT)', value: 'PST8PDT,M3.2.0,M11.1.0' },
-  { label: 'USA Alaska (AKST/AKDT)', value: 'AKST9AKDT,M3.2.0,M11.1.0' },
-  { label: 'USA Hawaii (HST)', value: 'HST10' },
-  { label: 'Canada Eastern: Toronto / Montreal (EST/EDT)', value: 'EST5EDT,M3.2.0,M11.1.0' },
-  { label: 'Canada Pacific: Vancouver (PST/PDT)', value: 'PST8PDT,M3.2.0,M11.1.0' },
-  { label: 'Brazil / Sao Paulo / Rio de Janeiro (BRT)', value: 'BRT3' },
-  { label: 'Mexico / Mexico City (CST/CDT)', value: 'CST6CDT,M4.1.0,M10.5.0' },
-  { label: 'South Africa / Johannesburg (SAST)', value: 'SAST-2' },
-  { label: 'Egypt / Cairo (EET)', value: 'EET-2' },
-  { label: 'UTC / GMT', value: 'GMT0' }
-];
+
 
 const GPIO_PINS = ['2', '3', '4', '5', '12', '13', '14', '15', '16', '17', '18', '19', '21', '22', '23', '25', '26', '27', '32', '33'];
 
