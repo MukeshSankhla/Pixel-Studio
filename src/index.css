@@ -516,6 +516,33 @@ h6 {
   transform: translateX(-50%) scale(1);
 }
 
+/* Prevent tooltips from clipping on the boundaries of the scrollable sidebar panel */
+.widget-add-btn:nth-child(3n+1) .btn-tooltip {
+  left: 0;
+  transform: scale(0.85);
+}
+.widget-add-btn:nth-child(3n+1):hover .btn-tooltip {
+  transform: scale(1);
+}
+.widget-add-btn:nth-child(3n+1) .btn-tooltip::after {
+  left: 38px;
+  transform: none;
+}
+
+.widget-add-btn:nth-child(3n) .btn-tooltip {
+  left: auto;
+  right: 0;
+  transform: scale(0.85);
+}
+.widget-add-btn:nth-child(3n):hover .btn-tooltip {
+  transform: scale(1);
+}
+.widget-add-btn:nth-child(3n) .btn-tooltip::after {
+  left: auto;
+  right: 38px;
+  transform: none;
+}
+
 /* Layers list hierarchy */
 .layers-list-group {
   display: flex;

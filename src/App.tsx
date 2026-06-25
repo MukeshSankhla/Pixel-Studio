@@ -50,6 +50,47 @@ import { db } from './firebase';
 import { collection, addDoc } from 'firebase/firestore';
 import confetti from 'canvas-confetti';
 
+const TIMEZONES = [
+  { label: 'India / New Delhi (IST)', value: 'IST-5:30' },
+  { label: 'China / Beijing / Shanghai (CST)', value: 'CST-8' },
+  { label: 'Taiwan / Taipei (CST)', value: 'CST-8' },
+  { label: 'Singapore / Malaysia / Hong Kong (SGT/HKT)', value: 'CST-8' },
+  { label: 'Philippines / Manila (PHT)', value: 'PHT-8' },
+  { label: 'Japan / South Korea: Tokyo / Seoul (JST/KST)', value: 'JST-9' },
+  { label: 'Thailand / Vietnam / Indonesia: Bangkok / Jakarta (ICT)', value: 'ICT-7' },
+  { label: 'Nepal / Kathmandu (NPT)', value: 'NPT-5:45' },
+  { label: 'Bangladesh / Dhaka (BST)', value: 'BST-6' },
+  { label: 'Pakistan / Karachi (PKT)', value: 'PKT-5' },
+  { label: 'United Kingdom: London (GMT/BST)', value: 'GMT0BST,M3.5.0/2,M10.5.0/2' },
+  { label: 'Germany / France / Italy: Berlin / Paris / Rome (CET/CEST)', value: 'CET-1CEST,M3.5.0,M10.5.0/3' },
+  { label: 'Romania / Greece / Ukraine / Turkey: Athens / Istanbul (EET/EEST)', value: 'EET-2EEST,M3.5.0,M10.5.0/3' },
+  { label: 'Saudi Arabia / Russia: Moscow / Riyadh (MSK/AST)', value: 'MSK-3' },
+  { label: 'Russia: Samara (SAMT)', value: 'SAMT-4' },
+  { label: 'Russia: Yekaterinburg (YEKT)', value: 'YEKT-5' },
+  { label: 'Russia: Omsk / Novosibirsk (OMST/NOVT)', value: 'OMST-6' },
+  { label: 'Russia: Vladivostok / Yakutsk (VLAT/YAKT)', value: 'VLAT-10' },
+  { label: 'UAE / Dubai / Abu Dhabi (GST)', value: 'GST-4' },
+  { label: 'Iran / Tehran (IRST)', value: 'IRST-3:30' },
+  { label: 'Australia Eastern: Sydney / Melbourne (AEST/AEDT)', value: 'AEST-10AEDT,M10.1.0,M4.1.0/3' },
+  { label: 'Australia Western: Perth (AWST)', value: 'AWST-8' },
+  { label: 'New Zealand / Auckland (NZST/NZDT)', value: 'NZST-12NZDT,M9.5.0/2,M4.5.0/3' },
+  { label: 'USA Eastern: New York / Miami (EST/EDT)', value: 'EST5EDT,M3.2.0,M11.1.0' },
+  { label: 'USA Central: Chicago / Houston (CST/CDT)', value: 'CST6CDT,M3.2.0,M11.1.0' },
+  { label: 'USA Mountain: Denver / Phoenix (MST/MDT)', value: 'MST7MDT,M3.2.0,M11.1.0' },
+  { label: 'USA Pacific: Los Angeles / Seattle (PST/PDT)', value: 'PST8PDT,M3.2.0,M11.1.0' },
+  { label: 'USA Alaska (AKST/AKDT)', value: 'AKST9AKDT,M3.2.0,M11.1.0' },
+  { label: 'USA Hawaii (HST)', value: 'HST10' },
+  { label: 'Canada Eastern: Toronto / Montreal (EST/EDT)', value: 'EST5EDT,M3.2.0,M11.1.0' },
+  { label: 'Canada Pacific: Vancouver (PST/PDT)', value: 'PST8PDT,M3.2.0,M11.1.0' },
+  { label: 'Brazil / Sao Paulo / Rio de Janeiro (BRT)', value: 'BRT3' },
+  { label: 'Mexico / Mexico City (CST/CDT)', value: 'CST6CDT,M4.1.0,M10.5.0' },
+  { label: 'South Africa / Johannesburg (SAST)', value: 'SAST-2' },
+  { label: 'Egypt / Cairo (EET)', value: 'EET-2' },
+  { label: 'UTC / GMT', value: 'GMT0' }
+];
+
+const GPIO_PINS = ['2', '3', '4', '5', '12', '13', '14', '15', '16', '17', '18', '19', '21', '22', '23', '25', '26', '27', '32', '33'];
+
 const Youtube = (props: any) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -140,13 +181,14 @@ export default function App() {
   // Network/Hardware export configs (Defaulting to user's constants)
   const [wifiSsid, setWifiSsid] = useState(() => localStorage.getItem('pixel_studio_wifi_ssid') || 'Makerbrains_2.4G');
   const [wifiPass, setWifiPass] = useState(() => localStorage.getItem('pixel_studio_wifi_pass') || 'Balaji2830');
-  const [ntpServer, setNtpServer] = useState(() => localStorage.getItem('pixel_studio_ntp_server') || 'pool.ntp.org');
-  const [tzInfo, setTzInfo] = useState(() => localStorage.getItem('pixel_studio_tz_info') || 'IST-5:30');
-  const [owmKey, setOwmKey] = useState(() => localStorage.getItem('pixel_studio_owm_key') || '43f22249d3d42ec5daf08c4384ca809b');
-  const [owmCity, setOwmCity] = useState(() => localStorage.getItem('pixel_studio_owm_city') || 'Hyderabad');
-  const [owmCountry, setOwmCountry] = useState(() => localStorage.getItem('pixel_studio_owm_country') || 'IN');
-  const [ytApiKey, setYtApiKey] = useState(() => localStorage.getItem('pixel_studio_yt_api_key') || '');
-  const [ytChannelId, setYtChannelId] = useState(() => localStorage.getItem('pixel_studio_yt_channel_id') || 'UCFYguRGMmGpH493PDX5WmBA');
+  const [ledPin, setLedPin] = useState(() => localStorage.getItem('pixel_studio_led_pin') || '3');
+  const ntpServer = localStorage.getItem('pixel_studio_ntp_server') || 'pool.ntp.org';
+  const tzInfo = localStorage.getItem('pixel_studio_tz_info') || 'IST-5:30';
+  const owmKey = localStorage.getItem('pixel_studio_owm_key') || '43f22249d3d42ec5daf08c4384ca809b';
+  const owmCity = localStorage.getItem('pixel_studio_owm_city') || 'Hyderabad';
+  const owmCountry = localStorage.getItem('pixel_studio_owm_country') || 'IN';
+  const ytApiKey = localStorage.getItem('pixel_studio_yt_api_key') || '';
+  const ytChannelId = localStorage.getItem('pixel_studio_yt_channel_id') || 'UCFYguRGMmGpH493PDX5WmBA';
   const [ytSubCount, setYtSubCount] = useState<string>('1980');
 
   // Connection status
@@ -154,7 +196,12 @@ export default function App() {
     return localStorage.getItem('pixel_studio_esp_ip') || '192.168.1.10';
   });
   const [liveMode, setLiveMode] = useState<'off' | 'wifi'>('off');
-  const [brightness, setBrightness] = useState(60);
+  const [staticIpEnabled, setStaticIpEnabled] = useState(() => localStorage.getItem('pixel_studio_static_ip_enabled') === 'true');
+  const [staticIp, setStaticIp] = useState(() => localStorage.getItem('pixel_studio_static_ip') || '192.168.1.10');
+  const [gatewayIp, setGatewayIp] = useState(() => localStorage.getItem('pixel_studio_gateway_ip') || '192.168.1.1');
+  const [subnetMask, setSubnetMask] = useState(() => localStorage.getItem('pixel_studio_subnet_mask') || '255.255.255.0');
+  const [dnsIp, setDnsIp] = useState(() => localStorage.getItem('pixel_studio_dns_ip') || '8.8.8.8');
+  const [brightness, setBrightness] = useState(10);
   const [wifiSocket, setWifiSocket] = useState<WebSocket | null>(null);
   const [isConnectedWifiLive, setIsConnectedWifiLive] = useState(false);
   const [isConnectingWifiLive, setIsConnectingWifiLive] = useState(false);
@@ -497,13 +544,12 @@ export default function App() {
   const handleSaveCredentials = () => {
     localStorage.setItem('pixel_studio_wifi_ssid', wifiSsid);
     localStorage.setItem('pixel_studio_wifi_pass', wifiPass);
-    localStorage.setItem('pixel_studio_ntp_server', ntpServer);
-    localStorage.setItem('pixel_studio_tz_info', tzInfo);
-    localStorage.setItem('pixel_studio_owm_key', owmKey);
-    localStorage.setItem('pixel_studio_owm_city', owmCity);
-    localStorage.setItem('pixel_studio_owm_country', owmCountry);
-    localStorage.setItem('pixel_studio_yt_api_key', ytApiKey);
-    localStorage.setItem('pixel_studio_yt_channel_id', ytChannelId);
+    localStorage.setItem('pixel_studio_led_pin', ledPin);
+    localStorage.setItem('pixel_studio_static_ip_enabled', String(staticIpEnabled));
+    localStorage.setItem('pixel_studio_static_ip', staticIp);
+    localStorage.setItem('pixel_studio_gateway_ip', gatewayIp);
+    localStorage.setItem('pixel_studio_subnet_mask', subnetMask);
+    localStorage.setItem('pixel_studio_dns_ip', dnsIp);
     setShowCredentialsModal(false);
     window.showToast('Configurations saved locally!', 'success');
   };
@@ -582,7 +628,9 @@ export default function App() {
         shadowColor: '#000000',
         fontSize: 1,
         scrollEffect: 'none',
-        fontFamily: 'bold'
+        fontFamily: 'bold',
+        tzInfo: localStorage.getItem('pixel_studio_tz_info') || 'IST-5:30',
+        ntpServer: localStorage.getItem('pixel_studio_ntp_server') || 'pool.ntp.org'
       } as Widget;
     } else if (type === 'date') {
       newWidget = {
@@ -594,7 +642,9 @@ export default function App() {
         shadowColor: '#000000',
         fontSize: 1,
         scrollEffect: 'none',
-        fontFamily: 'standard'
+        fontFamily: 'standard',
+        tzInfo: localStorage.getItem('pixel_studio_tz_info') || 'IST-5:30',
+        ntpServer: localStorage.getItem('pixel_studio_ntp_server') || 'pool.ntp.org'
       } as Widget;
     } else if (type === 'weather') {
       newWidget = {
@@ -639,6 +689,9 @@ export default function App() {
         briefShadowColor: '#000000',
         briefX: 22,
         briefY: 8,
+        owmKey: localStorage.getItem('pixel_studio_owm_key') || '43f22249d3d42ec5daf08c4384ca809b',
+        owmCity: localStorage.getItem('pixel_studio_owm_city') || 'Hyderabad',
+        owmCountry: localStorage.getItem('pixel_studio_owm_country') || 'IN'
       } as Widget;
     } else if (type === 'clock') {
       newWidget = {
@@ -655,12 +708,12 @@ export default function App() {
         timeOfDayOverride: 'auto',
         bgX: 10,
         bgY: 8,
-        dateX: 20,
+        dateX: 24,
         dateY: 0,
-        timeX: 20,
+        timeX: 24,
         timeY: 8,
         dateFormat: 'DD MMM',
-        timeFormat: 'HH:MM',
+        timeFormat: 'HH:MM AM/PM',
         dateColor: '#ffffff',
         timeColor: '#ffffff',
         dateColorMode: 'custom',
@@ -674,7 +727,9 @@ export default function App() {
         dateShadowColorMode: 'auto',
         timeShadowColorMode: 'auto',
         dateShadowColor: '#000000',
-        timeShadowColor: '#000000'
+        timeShadowColor: '#000000',
+        tzInfo: localStorage.getItem('pixel_studio_tz_info') || 'IST-5:30',
+        ntpServer: localStorage.getItem('pixel_studio_ntp_server') || 'pool.ntp.org'
       } as Widget;
     } else if (type === 'weather-temp') {
       newWidget = {
@@ -688,6 +743,9 @@ export default function App() {
         fontSize: 1,
         scrollEffect: 'none',
         fontFamily: 'standard',
+        owmKey: localStorage.getItem('pixel_studio_owm_key') || '43f22249d3d42ec5daf08c4384ca809b',
+        owmCity: localStorage.getItem('pixel_studio_owm_city') || 'Hyderabad',
+        owmCountry: localStorage.getItem('pixel_studio_owm_country') || 'IN'
       } as Widget;
     } else if (type === 'weather-humi') {
       newWidget = {
@@ -701,6 +759,9 @@ export default function App() {
         fontSize: 1,
         scrollEffect: 'none',
         fontFamily: 'standard',
+        owmKey: localStorage.getItem('pixel_studio_owm_key') || '43f22249d3d42ec5daf08c4384ca809b',
+        owmCity: localStorage.getItem('pixel_studio_owm_city') || 'Hyderabad',
+        owmCountry: localStorage.getItem('pixel_studio_owm_country') || 'IN'
       } as Widget;
     } else if (type === 'weather-brief') {
       newWidget = {
@@ -714,6 +775,9 @@ export default function App() {
         fontSize: 1,
         scrollEffect: 'none',
         fontFamily: 'bold',
+        owmKey: localStorage.getItem('pixel_studio_owm_key') || '43f22249d3d42ec5daf08c4384ca809b',
+        owmCity: localStorage.getItem('pixel_studio_owm_city') || 'Hyderabad',
+        owmCountry: localStorage.getItem('pixel_studio_owm_country') || 'IN'
       } as Widget;
     } else if (type === 'timer') {
       newWidget = {
@@ -756,7 +820,24 @@ export default function App() {
         iconY: 0,
         textX: 0,
         textY: 0,
-        format: 'short'
+        format: 'short',
+        ytApiKey: localStorage.getItem('pixel_studio_yt_api_key') || '',
+        ytChannelId: localStorage.getItem('pixel_studio_yt_channel_id') || 'UCFYguRGMmGpH493PDX5WmBA'
+      } as Widget;
+    } else if (type === 'counter') {
+      newWidget = {
+        ...baseFields,
+        x: 0,
+        y: 0,
+        width: 30,
+        height: 8,
+        count: 0,
+        color: '#3b82f6',
+        shadow: false,
+        shadowColor: '#000000',
+        fontSize: 1,
+        scrollEffect: 'none',
+        fontFamily: 'bold'
       } as Widget;
     } else {
       newWidget = {
@@ -810,6 +891,17 @@ export default function App() {
     };
     setScenes(updatedScenes);
     saveAllToStorage(updatedScenes, stickers, backgrounds, animations);
+  };
+
+  const handleIncrementCounter = (id: string) => {
+    if (!activeScene) return;
+    const widget = activeScene.widgets.find(w => w.id === id);
+    if (widget && widget.type === 'counter') {
+      handleUpdateWidget({
+        ...widget,
+        count: (widget.count ?? 0) + 1
+      });
+    }
   };
 
   const handleUpdateWidgetPosition = (id: string, x: number, y: number) => {
@@ -1208,7 +1300,13 @@ export default function App() {
       ytChannelId,
       scenes,
       stickers,
-      brightness
+      brightness,
+      ledPin,
+      staticIpEnabled,
+      staticIp,
+      gatewayIp,
+      subnetMask,
+      dnsIp
     });
 
     const element = document.createElement("a");
@@ -1339,7 +1437,7 @@ export default function App() {
             onClick={() => setShowCredentialsModal(true)}
             className="btn btn-secondary btn-circle"
             style={{ padding: '8px', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-            title="Configure Credentials"
+            title="Device Configuration"
           >
             <Settings size={14} />
           </button>
@@ -1531,6 +1629,7 @@ export default function App() {
                       { type: 'time', Icon: Clock, label: 'Time', desc: 'Live time display' },
                       { type: 'clock', Icon: CloudSun, label: 'Clock', desc: 'Animated day/night clock face' },
                       { type: 'timer', Icon: Timer, label: 'Timer', desc: 'Countdown timer widget' },
+                      { type: 'counter', Icon: Plus, label: 'Counter', desc: 'Click to increment counter widget' },
                       { type: 'weather', Icon: Cloud, label: 'Weather', desc: 'Full animated weather face' },
                       { type: 'weather-temp', Icon: Thermometer, label: 'Temp', desc: 'Temperature readout only' },
                       { type: 'weather-humi', Icon: Droplets, label: 'Humidity', desc: 'Humidity readout only' },
@@ -1681,6 +1780,7 @@ export default function App() {
                 onDragStart={pushToStudioHistory}
                 onDragEnd={() => saveAllToStorage(scenes, stickers, backgrounds, animations)}
                 ytSubCount={ytSubCount}
+                onIncrementCounter={handleIncrementCounter}
               />
             </section>
 
@@ -1772,6 +1872,8 @@ export default function App() {
               <p><span style={{ color: 'var(--text-light)', fontWeight: 'bold' }}>YouTube Key:</span> {ytApiKey ? `${ytApiKey.substring(0, 8)}...` : 'Not Set'}</p>
               <p><span style={{ color: 'var(--text-light)', fontWeight: 'bold' }}>YouTube Channel:</span> {ytChannelId}</p>
               <p><span style={{ color: 'var(--text-light)', fontWeight: 'bold' }}>NTP Server:</span> {ntpServer}</p>
+              <p><span style={{ color: 'var(--text-light)', fontWeight: 'bold' }}>IP Config:</span> {staticIpEnabled ? `Static (${staticIp})` : 'DHCP (Dynamic)'}</p>
+              <p><span style={{ color: 'var(--text-light)', fontWeight: 'bold' }}>LED Matrix Pin:</span> GPIO {ledPin}</p>
               <p><span style={{ color: 'var(--text-light)', fontWeight: 'bold' }}>Total Scenes:</span> {scenes.length}</p>
             </div>
 
@@ -1793,14 +1895,14 @@ export default function App() {
         </div>
       )}
 
-      {/* 4. Credentials Settings Modal */}
+      {/* 4. Device Configuration Modal */}
       {showCredentialsModal && (
         <div className="modal-backdrop-layer">
           <div className="glass-panel modal-dialog-box" style={{ maxWidth: '520px' }}>
             <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '16px' }}>
-              <Settings className="text-indigo-500" size={18} /> Device Credentials & APIs
+              <Settings className="text-indigo-500" size={18} /> Device configuration
             </h3>
-            <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Specify network details and API keys used in the generated firmware sketch.</p>
+            <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Specify network details, NTP server, and hardware pin configurations.</p>
 
             <div className="credentials-inputs-grid">
               <div className="prop-field">
@@ -1821,71 +1923,80 @@ export default function App() {
                   className="glass-input"
                 />
               </div>
-              <div className="prop-field full-span-grid">
-                <label className="prop-label">OpenWeatherMap API Key</label>
-                <input
-                  type="text"
-                  value={owmKey}
-                  onChange={(e) => setOwmKey(e.target.value)}
-                  className="glass-input"
-                />
-              </div>
-              <div className="prop-field full-span-grid">
-                <label className="prop-label">YouTube API Key</label>
-                <input
-                  type="text"
-                  value={ytApiKey}
-                  onChange={(e) => setYtApiKey(e.target.value)}
-                  className="glass-input"
-                  placeholder="Enter Google Cloud API Key..."
-                />
-              </div>
-              <div className="prop-field full-span-grid">
-                <label className="prop-label">YouTube Channel ID</label>
-                <input
-                  type="text"
-                  value={ytChannelId}
-                  onChange={(e) => setYtChannelId(e.target.value)}
-                  className="glass-input"
-                  placeholder="e.g. UCFYguRGMmGpH493PDX5WmBA"
-                />
-              </div>
+
               <div className="prop-field">
-                <label className="prop-label">NTP Server</label>
-                <input
-                  type="text"
-                  value={ntpServer}
-                  onChange={(e) => setNtpServer(e.target.value)}
+                <label className="prop-label">LED MATRIX GPIO Pin</label>
+                <select
+                  value={ledPin}
+                  onChange={(e) => setLedPin(e.target.value)}
                   className="glass-input"
-                />
+                  style={{ padding: '8px 12px' }}
+                >
+                  {(GPIO_PINS.includes(ledPin) ? GPIO_PINS : [...GPIO_PINS, ledPin]).map((pin) => (
+                    <option key={pin} value={pin}>
+                      GPIO {pin}
+                    </option>
+                  ))}
+                </select>
               </div>
-              <div className="prop-field">
-                <label className="prop-label">OWM Target City</label>
+
+              <div className="prop-field full-span-grid" style={{ flexDirection: 'row', alignItems: 'center', gap: '8px', marginTop: '4px', marginBottom: '4px' }}>
                 <input
-                  type="text"
-                  value={owmCity}
-                  onChange={(e) => setOwmCity(e.target.value)}
-                  className="glass-input"
+                  type="checkbox"
+                  id="static-ip-checkbox"
+                  checked={staticIpEnabled}
+                  onChange={(e) => setStaticIpEnabled(e.target.checked)}
+                  style={{ cursor: 'pointer', width: '16px', height: '16px' }}
                 />
+                <label htmlFor="static-ip-checkbox" className="prop-label" style={{ margin: 0, cursor: 'pointer', fontWeight: 'bold' }}>
+                  Enable Fixed / Static IP configuration
+                </label>
               </div>
-              <div className="prop-field">
-                <label className="prop-label">Country Code</label>
-                <input
-                  type="text"
-                  value={owmCountry}
-                  onChange={(e) => setOwmCountry(e.target.value)}
-                  className="glass-input"
-                />
-              </div>
-              <div className="prop-field full-span-grid">
-                <label className="prop-label">Timezone Rule (TZ)</label>
-                <input
-                  type="text"
-                  value={tzInfo}
-                  onChange={(e) => setTzInfo(e.target.value)}
-                  className="glass-input"
-                />
-              </div>
+
+              {staticIpEnabled && (
+                <>
+                  <div className="prop-field">
+                    <label className="prop-label">Static IP Address</label>
+                    <input
+                      type="text"
+                      value={staticIp}
+                      onChange={(e) => setStaticIp(e.target.value)}
+                      className="glass-input"
+                      placeholder="e.g. 192.168.1.10"
+                    />
+                  </div>
+                  <div className="prop-field">
+                    <label className="prop-label">Gateway IP</label>
+                    <input
+                      type="text"
+                      value={gatewayIp}
+                      onChange={(e) => setGatewayIp(e.target.value)}
+                      className="glass-input"
+                      placeholder="e.g. 192.168.1.1"
+                    />
+                  </div>
+                  <div className="prop-field">
+                    <label className="prop-label">Subnet Mask</label>
+                    <input
+                      type="text"
+                      value={subnetMask}
+                      onChange={(e) => setSubnetMask(e.target.value)}
+                      className="glass-input"
+                      placeholder="e.g. 255.255.255.0"
+                    />
+                  </div>
+                  <div className="prop-field">
+                    <label className="prop-label">DNS IP</label>
+                    <input
+                      type="text"
+                      value={dnsIp}
+                      onChange={(e) => setDnsIp(e.target.value)}
+                      className="glass-input"
+                      placeholder="e.g. 8.8.8.8"
+                    />
+                  </div>
+                </>
+              )}
             </div>
 
             <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '12px' }}>

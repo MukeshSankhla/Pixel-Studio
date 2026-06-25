@@ -1,4 +1,4 @@
-export type WidgetType = 'text' | 'sticker' | 'background' | 'animation' | 'timer' | 'date' | 'time' | 'weather' | 'weather-temp' | 'weather-humi' | 'weather-brief' | 'shape' | 'clock' | 'youtube-sub';
+export type WidgetType = 'text' | 'sticker' | 'background' | 'animation' | 'timer' | 'date' | 'time' | 'weather' | 'weather-temp' | 'weather-humi' | 'weather-brief' | 'shape' | 'clock' | 'youtube-sub' | 'counter';
 
 export interface BaseWidget {
   id: string;
@@ -10,6 +10,13 @@ export interface BaseWidget {
   height: number;
   zIndex: number;
   shadowColorMode?: 'auto' | 'custom';
+  owmKey?: string;
+  owmCity?: string;
+  owmCountry?: string;
+  ytApiKey?: string;
+  ytChannelId?: string;
+  tzInfo?: string;
+  ntpServer?: string;
 }
 
 export type ScrollEffect = 
@@ -19,6 +26,8 @@ export type ScrollEffect =
   | 'top' 
   | 'bottom' 
   | 'bounce' 
+  | 'up-down'
+  | 'rotate-3d'
   | 'wave' 
   | 'shimmer' 
   | 'glow' 
@@ -281,6 +290,16 @@ export interface YouTubeSubWidget extends BaseWidget {
   format?: 'short' | 'full';
 }
 
+export interface CounterWidget extends BaseWidget {
+  type: 'counter';
+  count: number;
+  color: string;
+  shadow: boolean;
+  shadowColor: string;
+  fontSize: number;
+  scrollEffect: ScrollEffect;
+  fontFamily: 'standard' | 'bold' | 'retro' | 'pixel';
+}
 
 export type Widget =
   | TextWidget
@@ -296,7 +315,8 @@ export type Widget =
   | WeatherBriefWidget
   | ShapeWidget
   | ClockWidget
-  | YouTubeSubWidget;
+  | YouTubeSubWidget
+  | CounterWidget;
 
 export interface Sticker {
   id: string;

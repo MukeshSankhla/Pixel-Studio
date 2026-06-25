@@ -13,6 +13,12 @@ interface CodeGenOptions {
   scenes: Scene[];
   stickers: Sticker[];
   brightness: number;
+  ledPin: string;
+  staticIpEnabled: boolean;
+  staticIp: string;
+  gatewayIp: string;
+  subnetMask: string;
+  dnsIp: string;
 }
 
 export function generateArduinoCode(options: CodeGenOptions): string {
@@ -28,8 +34,44 @@ export function generateArduinoCode(options: CodeGenOptions): string {
     ytChannelId,
     scenes,
     stickers,
-    brightness
+    brightness,
+    ledPin,
+    staticIpEnabled,
+    staticIp,
+    gatewayIp,
+    subnetMask,
+    dnsIp
   } = options;
+
+  // Find first weather/youtube/timezone/NTP credentials configured in any scene widget
+  let finalOwmKey = owmKey;
+  let finalOwmCity = owmCity;
+  let finalOwmCountry = owmCountry;
+  let finalYtApiKey = ytApiKey;
+  let finalYtChannelId = ytChannelId;
+  let finalTzInfo = tzInfo;
+  let finalNtpServer = ntpServer;
+
+  scenes.forEach(scene => {
+    scene.widgets.forEach(w => {
+      if (w.type === 'weather' || w.type === 'weather-temp' || w.type === 'weather-humi' || w.type === 'weather-brief') {
+        const anyW = w as any;
+        if (anyW.owmKey) finalOwmKey = anyW.owmKey;
+        if (anyW.owmCity) finalOwmCity = anyW.owmCity;
+        if (anyW.owmCountry) finalOwmCountry = anyW.owmCountry;
+      }
+      if (w.type === 'youtube-sub') {
+        const anyW = w as any;
+        if (anyW.ytApiKey) finalYtApiKey = anyW.ytApiKey;
+        if (anyW.ytChannelId) finalYtChannelId = anyW.ytChannelId;
+      }
+      if (w.type === 'clock' || w.type === 'time' || w.type === 'date') {
+        const anyW = w as any;
+        if (anyW.tzInfo) finalTzInfo = anyW.tzInfo;
+        if (anyW.ntpServer) finalNtpServer = anyW.ntpServer;
+      }
+    });
+  });
 
   const formatHexColor = (color: string): string => {
     if (!color || color === 'transparent') return '0x00000000';
@@ -153,6 +195,21 @@ export function generateArduinoCode(options: CodeGenOptions): string {
     });
   });
 
+  // 1d. Generate counter variables
+  let counterVariables = '// Counter widget states\n';
+  const getCounterVarName = (widgetId: string) => {
+    return `counter_${widgetId.replace(/[^a-zA-Z0-9_]/g, '_')}`;
+  };
+
+  scenes.forEach(scene => {
+    scene.widgets.forEach(w => {
+      if (w.type === 'counter') {
+        const initialCount = (w as any).count !== undefined ? (w as any).count : 0;
+        counterVariables += `long ${getCounterVarName(w.id)} = ${initialCount};\n`;
+      }
+    });
+  });
+
   // 2. Generate Scene render commands
   let sceneFunctions = '';
   scenes.forEach((scene, index) => {
@@ -264,12 +321,12 @@ export function generateArduinoCode(options: CodeGenOptions): string {
         const shadowColHex = ck.shadowColorMode === 'custom' ? ck.shadowColor.replace('#', '0xff') : '0';
         const bgX = ck.bgX !== undefined ? ck.bgX : 10;
         const bgY = ck.bgY !== undefined ? ck.bgY : 8;
-        const dX = ck.dateX !== undefined ? ck.dateX : 20;
+        const dX = ck.dateX !== undefined ? ck.dateX : 24;
         const dY = ck.dateY !== undefined ? ck.dateY : 0;
-        const tX = ck.timeX !== undefined ? ck.timeX : 20;
+        const tX = ck.timeX !== undefined ? ck.timeX : 24;
         const tY = ck.timeY !== undefined ? ck.timeY : 8;
         const dFmt = ck.dateFormat || 'DD MMM';
-        const tFmt = ck.timeFormat || 'HH:MM';
+        const tFmt = ck.timeFormat || 'HH:MM AM/PM';
         const dateColor = ck.dateColor !== undefined ? ck.dateColor.replace('#', '0xff') : ck.color.replace('#', '0xff');
         const timeColor = ck.timeColor !== undefined ? ck.timeColor.replace('#', '0xff') : ck.color.replace('#', '0xff');
         const dateBold = (ck.dateFontFamily || ck.fontFamily || 'standard') === 'bold' ? 'true' : 'false';
@@ -288,6 +345,13 @@ export function generateArduinoCode(options: CodeGenOptions): string {
         const timer = w;
         const shadowColHex = timer.shadowColorMode === 'custom' ? timer.shadowColor.replace('#', '0xff') : '0';
         sceneFunctions += `  drawTimer(${timer.x}, ${timer.y}, ${timer.width}, ${timer.height}, ${timer.color.replace('#', '0xff')}, ${timer.fontSize}, ${timer.shadow ? 'true' : 'false'}, ${shadowColHex}, "${timer.scrollEffect || 'none'}", ${(timer as any).scrollSpeed || 4}, ${timer.fontFamily === 'bold' ? 'true' : 'false'});\n`;
+      }
+      else if (w.type === 'counter') {
+        const counter = w as any;
+        const colorHex = counter.color.replace('#', '0xff');
+        const shadowColHex = counter.shadowColorMode === 'custom' ? counter.shadowColor.replace('#', '0xff') : '0';
+        const varName = getCounterVarName(w.id);
+        sceneFunctions += `  drawCounter(${varName}, ${counter.x}, ${counter.y}, ${counter.width}, ${counter.height}, ${colorHex}, ${counter.fontSize}, ${counter.shadow ? 'true' : 'false'}, ${shadowColHex}, "${counter.scrollEffect || 'none'}", ${(counter as any).scrollSpeed || 4}, ${counter.fontFamily === 'bold' ? 'true' : 'false'});\n`;
       }
       else if (w.type === 'animation') {
         const anim = w;
@@ -372,7 +436,7 @@ export function generateArduinoCode(options: CodeGenOptions): string {
 #include <NTPClient.h>
 #include <WiFiClientSecure.h>
 
-#define MATRIX_PIN    2
+#define MATRIX_PIN    ${ledPin}
 #define MATRIX_WIDTH  80
 #define MATRIX_HEIGHT 16
 #define NUM_LEDS      (MATRIX_WIDTH * MATRIX_HEIGHT)
@@ -386,14 +450,21 @@ export function generateArduinoCode(options: CodeGenOptions): string {
 const char* WIFI_SSID   = "${wifiSsid}";
 const char* WIFI_PASS   = "${wifiPass}";
 
+// Static IP Settings
+#define STATIC_IP_ENABLED ${staticIpEnabled ? 'true' : 'false'}
+const char* STATIC_IP   = "${staticIp || '192.168.1.10'}";
+const char* GATEWAY_IP  = "${gatewayIp || '192.168.1.1'}";
+const char* SUBNET_MASK = "${subnetMask || '255.255.255.0'}";
+const char* DNS_IP      = "${dnsIp || '8.8.8.8'}";
+
 // NTP & Timezone
-const char* NTP_SERVER  = "${ntpServer}";
-const char* TZ_INFO     = "${tzInfo}"; // Timezone rules (e.g. IST-5:30)
+const char* NTP_SERVER  = "${finalNtpServer}";
+const char* TZ_INFO     = "${finalTzInfo}"; // Timezone rules (e.g. IST-5:30)
 
 // OpenWeatherMap Settings
-const char* OWM_KEY     = "${owmKey}";
-const char* OWM_CITY    = "${owmCity}";
-const char* OWM_COUNTRY = "${owmCountry}";
+const char* OWM_KEY     = "${finalOwmKey}";
+const char* OWM_CITY    = "${finalOwmCity}";
+const char* OWM_COUNTRY = "${finalOwmCountry}";
 unsigned long lastWeatherUpdate = 0;
 const unsigned long weatherInterval = 900000; // 15 mins
 
@@ -403,8 +474,8 @@ int weatherHumidity = 0;
 String weatherDesc = "Clear";
 
 // YouTube Settings
-const char* YT_API_KEY      = "${ytApiKey}";
-const char* YT_CHANNEL_ID   = "${ytChannelId}";
+const char* YT_API_KEY      = "${finalYtApiKey}";
+const char* YT_CHANNEL_ID   = "${finalYtChannelId}";
 unsigned long lastYtUpdate  = 0;
 const unsigned long ytInterval = 3600000; // 1 hour
 unsigned long ytRetryInterval = 300000;  // 5 mins on failure
@@ -468,6 +539,8 @@ ${customBackgroundArrays}
 
 // Custom animations in Flash memory
 ${customAnimationArrays}
+
+${counterVariables}
 
 // Tiny 3x5 font table for text rendering at Size 0
 const uint8_t PROGMEM tiny_font[96][3] = {
@@ -596,8 +669,9 @@ void drawWeather(int x, int y, int w, int h, String param, int iconX = 2, int ic
 void drawWeatherTemp(int x, int y, int w, int h, uint32_t color, int size, bool shadow = false, uint32_t shadowColor = 0, String effect = "none", int speed = 4, bool bold = false);
 void drawWeatherHumi(int x, int y, int w, int h, uint32_t color, int size, bool shadow = false, uint32_t shadowColor = 0, String effect = "none", int speed = 4, bool bold = false);
 void drawWeatherBrief(int x, int y, int w, int h, uint32_t color, int size, bool shadow = false, uint32_t shadowColor = 0, String effect = "none", int speed = 4, bool bold = false);
-void drawClock(int x, int y, int w, int h, uint32_t color, int size, String timeOfDayOverride = "auto", bool shadow = true, uint32_t shadowColor = 0, bool bold = true, int bgX = 10, int bgY = 8, int dateX = 20, int dateY = 0, int timeX = 20, int timeY = 8, String dateFormat = "DD MMM", String timeFormat = "HH:MM", uint32_t dateColor = 0xFFFFFF, uint32_t timeColor = 0xFFFFFF, bool dateBold = false, bool timeBold = true, int dateSize = 1, int timeSize = 1, bool dateShadow = true, bool timeShadow = true, uint32_t dateShadowColor = 0, uint32_t timeShadowColor = 0, String dateColorMode = "custom", String timeColorMode = "custom");
+void drawClock(int x, int y, int w, int h, uint32_t color, int size, String timeOfDayOverride = "auto", bool shadow = true, uint32_t shadowColor = 0, bool bold = true, int bgX = 10, int bgY = 8, int dateX = 24, int dateY = 0, int timeX = 24, int timeY = 8, String dateFormat = "DD MMM", String timeFormat = "HH:MM AM/PM", uint32_t dateColor = 0xFFFFFF, uint32_t timeColor = 0xFFFFFF, bool dateBold = false, bool timeBold = true, int dateSize = 1, int timeSize = 1, bool dateShadow = true, bool timeShadow = true, uint32_t dateShadowColor = 0, uint32_t timeShadowColor = 0, String dateColorMode = "custom", String timeColorMode = "custom");
 void drawTimer(int x, int y, int w, int h, uint32_t color, int size, bool shadow = false, uint32_t shadowColor = 0, String effect = "none", int speed = 4, bool bold = false);
+void drawCounter(long count, int x, int y, int w, int h, uint32_t color, int size, bool shadow = false, uint32_t shadowColor = 0, String effect = "none", int speed = 4, bool bold = false);
 void drawPrebuiltAnimation(String animId, int x, int y, int opacity = 100, int bgX = 10, int bgY = 8);
 void drawBackgroundPixels(const uint32_t* bg, int x, int y, int w, int h, int opacity = 100);
 void drawCustomAnimation(const uint32_t* const* frames, int framesCount, int x, int y, int w, int h, int frameRate, int opacity = 100);
@@ -607,6 +681,13 @@ String getSceneName(int idx) {
   switch (idx) {
     ${scenes.map((scene, i) => `case ${i}: return "${scene.name.toUpperCase().replace(/"/g, '\\"')}";`).join('\n    ')}
     default: return "UNKNOWN";
+  }
+}
+
+bool currentSceneHasTimer() {
+  switch (currentSceneIndex) {
+    ${scenes.map((scene, i) => `case ${i}: return ${scene.widgets.some(w => w.type === 'timer') ? 'true' : 'false'};`).join('\n    ')}
+    default: return false;
   }
 }
 
@@ -629,6 +710,21 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(ENCODER_A), handleEncoderInterrupt, CHANGE);
 
   // WiFi Connection (displays shifting rainbow color PIXEL BAR text until it connects)
+  #if defined(STATIC_IP_ENABLED) && STATIC_IP_ENABLED
+  {
+    IPAddress local_IP;
+    IPAddress gateway;
+    IPAddress subnet;
+    IPAddress dns;
+    if (local_IP.fromString(STATIC_IP) && gateway.fromString(GATEWAY_IP) && subnet.fromString(SUBNET_MASK) && dns.fromString(DNS_IP)) {
+      if (!WiFi.config(local_IP, gateway, subnet, dns)) {
+        Serial.println("Static IP Configuration Failed!");
+      } else {
+        Serial.println("Static IP Configured Successfully.");
+      }
+    }
+  }
+  #endif
   WiFi.begin(WIFI_SSID, WIFI_PASS);
   int connectCounter = 0;
   while (WiFi.status() != WL_CONNECTED && connectCounter < 30) { // check up to 15 seconds
@@ -873,10 +969,26 @@ void checkButton() {
         currentState = STATE_MENU_NAV;
       }
     } else if (clickCount == 1) {
-      // Single Push: Toggle timer settings or save timer settings
+      // Single Push: Toggle timer settings, increment counter, or save settings
       Serial.println("Single Push triggered");
       if (currentState == STATE_SCENE_PLAY) {
-        currentState = STATE_TIMER_ADJUST;
+        bool handled = false;
+        ${scenes.some(scene => scene.widgets.some(w => w.type === 'counter')) ? `switch(currentSceneIndex) {
+          ${scenes.map((scene, idx) => {
+            const counters = scene.widgets.filter(w => w.type === 'counter');
+            if (counters.length > 0) {
+              return `case ${idx}:
+            ` + counters.map(c => `${getCounterVarName(c.id)}++;`).join('\n            ') + `
+            handled = true;
+            break;`;
+            }
+            return '';
+          }).filter(s => s !== '').join('\n          ')}
+        }` : ''}
+        
+        if (!handled && currentSceneHasTimer()) {
+          currentState = STATE_TIMER_ADJUST;
+        }
       } else if (currentState == STATE_TIMER_ADJUST) {
         timerRunning = !timerRunning; // Start/Stop timer
         currentState = STATE_SCENE_PLAY;
@@ -1455,6 +1567,7 @@ void drawGradientBackground(uint32_t color1, uint32_t color2, int opacity) {
 
 void drawText(String txt, int x, int y, int w, int h, uint32_t color, int size, bool shadow, uint32_t shadowColor, String effect, int speed, bool bold) {
   int charWidth = (size == 0) ? 3 : 5 * size;
+  int charHeight = (size == 0) ? 5 : 8 * size;
   int charSpacing = (size == 0) ? 1 : 1 * size;
   if (bold) {
     charSpacing += 1;
@@ -1482,6 +1595,23 @@ void drawText(String txt, int x, int y, int w, int h, uint32_t color, int size, 
       scrollX = (sin(tick * 0.05 * speed) + 1.0) * 0.5 * range;
     } else {
       scrollX = 0;
+    }
+  } else if (effect == "top") {
+    int totalRange = h + charHeight;
+    if (totalRange > 0) {
+      scrollY = h - ((int)(tick * speed * 0.4) % totalRange);
+    }
+  } else if (effect == "bottom") {
+    int totalRange = h + charHeight;
+    if (totalRange > 0) {
+      scrollY = -charHeight + ((int)(tick * speed * 0.4) % totalRange);
+    }
+  } else if (effect == "up-down") {
+    int range = h - charHeight;
+    if (range > 0) {
+      scrollY = (sin(tick * 0.05 * speed) + 1.0) * 0.5 * range;
+    } else {
+      scrollY = 0;
     }
   }
 
@@ -1511,9 +1641,9 @@ void drawText(String txt, int x, int y, int w, int h, uint32_t color, int size, 
       if (ascii < 32 || ascii > 127) ascii = 63; // '?'
       int fontIdx = ascii - 32;
 
-      int charScrollY = y;
+      int charScrollY = y + scrollY;
       if (effect == "wave") {
-        charScrollY = y + (int)(sin(tick * 0.2 + (x + i * 6) * 0.1) * 1.5);
+        charScrollY = y + scrollY + (int)(sin(tick * 0.2 + (x + i * 6) * 0.1) * 1.5);
       }
 
       int finalOpacity = 100;
@@ -1535,13 +1665,25 @@ void drawText(String txt, int x, int y, int w, int h, uint32_t color, int size, 
         }
       }
 
+      int defaultStartX = curX;
+      int startX = defaultStartX;
+      float cosTheta = 1.0;
+      if (effect == "rotate-3d") {
+        cosTheta = cos(tick * 0.05 * speed);
+        float textCenter = textX + textWidth / 2.0;
+        float defaultCharCenter = defaultStartX + charWidth / 2.0;
+        float charCenter = textCenter + (defaultCharCenter - textCenter) * cosTheta;
+        startX = charCenter - (charWidth * abs(cosTheta)) / 2.0;
+      }
+
       // Draw shadow first
       if (shadow) {
         for (int col = 0; col < 3; col++) {
-          uint8_t colData = pgm_read_byte(&(tiny_font[fontIdx][col]));
+          int drawCol = cosTheta < 0 ? (3 - 1 - col) : col;
+          uint8_t colData = pgm_read_byte(&(tiny_font[fontIdx][drawCol]));
           for (int row = 0; row < 5; row++) {
             if ((colData >> row) & 1) {
-              int px = curX + col + 1;
+              int px = startX + (int)(col * abs(cosTheta)) + 1;
               int py = charScrollY + row + 1;
               if (px >= x && px < x + w && py >= y && py < y + h) {
                 setPixel(px, py, sr, sg, sb, finalOpacity);
@@ -1556,10 +1698,11 @@ void drawText(String txt, int x, int y, int w, int h, uint32_t color, int size, 
 
       // Draw primary character pixels
       for (int col = 0; col < 3; col++) {
-        uint8_t colData = pgm_read_byte(&(tiny_font[fontIdx][col]));
+        int drawCol = cosTheta < 0 ? (3 - 1 - col) : col;
+        uint8_t colData = pgm_read_byte(&(tiny_font[fontIdx][drawCol]));
         for (int row = 0; row < 5; row++) {
           if ((colData >> row) & 1) {
-            int px = curX + col;
+            int px = startX + (int)(col * abs(cosTheta));
             int py = charScrollY + row;
             if (px >= x && px < x + w && py >= y && py < y + h) {
               setPixel(px, py, finalR, finalG, finalB, finalOpacity);
@@ -1597,9 +1740,9 @@ void drawText(String txt, int x, int y, int w, int h, uint32_t color, int size, 
     for (int i = 0; i < txt.length(); i++) {
       char c = txt[i];
       
-      int charScrollY = y;
+      int charScrollY = y + scrollY;
       if (effect == "wave") {
-        charScrollY = y + (int)(sin(tick * 0.2 + (x + i * 6) * 0.1) * 1.5);
+        charScrollY = y + scrollY + (int)(sin(tick * 0.2 + (x + i * 6) * 0.1) * 1.5);
       }
 
       int finalOpacity = 100;
@@ -1628,13 +1771,25 @@ void drawText(String txt, int x, int y, int w, int h, uint32_t color, int size, 
       textCanvas.setTextColor(1);
       textCanvas.setCursor(0, 0);
       textCanvas.print(c);
+
+      int defaultStartX = curX;
+      int startX = defaultStartX;
+      float cosTheta = 1.0;
+      if (effect == "rotate-3d") {
+        cosTheta = cos(tick * 0.05 * speed);
+        float textCenter = textX + textWidth / 2.0;
+        float defaultCharCenter = defaultStartX + charWidth / 2.0;
+        float charCenter = textCenter + (defaultCharCenter - textCenter) * cosTheta;
+        startX = charCenter - (charWidth * abs(cosTheta)) / 2.0;
+      }
       
       // Draw shadow first
       if (shadow) {
         for (int cy = 0; cy < MATRIX_HEIGHT; cy++) {
           for (int cx = 0; cx < charWidth; cx++) {
-            if (textCanvas.getPixel(cx, cy)) {
-              int px = curX + cx + 1;
+            int drawCx = cosTheta < 0 ? (charWidth - 1 - cx) : cx;
+            if (textCanvas.getPixel(drawCx, cy)) {
+              int px = startX + (int)(cx * abs(cosTheta)) + 1;
               int py = charScrollY + cy + 1;
               if (px >= x && px < x + w && py >= y && py < y + h) {
                 setPixel(px, py, sr, sg, sb, finalOpacity);
@@ -1650,8 +1805,9 @@ void drawText(String txt, int x, int y, int w, int h, uint32_t color, int size, 
       // Draw main character pixels
       for (int cy = 0; cy < MATRIX_HEIGHT; cy++) {
         for (int cx = 0; cx < charWidth; cx++) {
-          if (textCanvas.getPixel(cx, cy)) {
-            int px = curX + cx;
+          int drawCx = cosTheta < 0 ? (charWidth - 1 - cx) : cx;
+          if (textCanvas.getPixel(drawCx, cy)) {
+            int px = startX + (int)(cx * abs(cosTheta));
             int py = charScrollY + cy;
             if (px >= x && px < x + w && py >= y && py < y + h) {
               setPixel(px, py, finalR, finalG, finalB, finalOpacity);
@@ -1828,6 +1984,12 @@ void drawTimer(int x, int y, int w, int h, uint32_t color, int size, bool shadow
   char timeStr[10];
   sprintf(timeStr, "%02d:%02d", mins, secs);
   drawText(timeStr, x, y, w, h, color, size, shadow, shadowColor, effect, speed, bold);
+}
+
+void drawCounter(long count, int x, int y, int w, int h, uint32_t color, int size, bool shadow, uint32_t shadowColor, String effect, int speed, bool bold) {
+  char countStr[32];
+  sprintf(countStr, "%ld", count);
+  drawText(countStr, x, y, w, h, color, size, shadow, shadowColor, effect, speed, bold);
 }
 
 void drawWeatherSticker(int sx, int sy, String condition) {

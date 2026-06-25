@@ -2,6 +2,60 @@ import React from 'react';
 import type { Widget, Sticker, ScrollEffect, BackgroundPreset, AnimationPreset } from '../types/studio';
 import { ArrowUp, ArrowDown } from 'lucide-react';
 
+const TIMEZONES = [
+  { label: 'India / New Delhi (IST)', value: 'IST-5:30' },
+  { label: 'China / Beijing / Shanghai (CST)', value: 'CST-8' },
+  { label: 'Taiwan / Taipei (CST)', value: 'CST-8' },
+  { label: 'Singapore / Malaysia / Hong Kong (SGT/HKT)', value: 'CST-8' },
+  { label: 'Philippines / Manila (PHT)', value: 'PHT-8' },
+  { label: 'Japan / South Korea: Tokyo / Seoul (JST/KST)', value: 'JST-9' },
+  { label: 'Thailand / Vietnam / Indonesia: Bangkok / Jakarta (ICT)', value: 'ICT-7' },
+  { label: 'Nepal / Kathmandu (NPT)', value: 'NPT-5:45' },
+  { label: 'Bangladesh / Dhaka (BST)', value: 'BST-6' },
+  { label: 'Pakistan / Karachi (PKT)', value: 'PKT-5' },
+  { label: 'United Kingdom: London (GMT/BST)', value: 'GMT0BST,M3.5.0/2,M10.5.0/2' },
+  { label: 'Germany / France / Italy: Berlin / Paris / Rome (CET/CEST)', value: 'CET-1CEST,M3.5.0,M10.5.0/3' },
+  { label: 'Romania / Greece / Ukraine / Turkey: Athens / Istanbul (EET/EEST)', value: 'EET-2EEST,M3.5.0,M10.5.0/3' },
+  { label: 'Saudi Arabia / Russia: Moscow / Riyadh (MSK/AST)', value: 'MSK-3' },
+  { label: 'Russia: Samara (SAMT)', value: 'SAMT-4' },
+  { label: 'Russia: Yekaterinburg (YEKT)', value: 'YEKT-5' },
+  { label: 'Russia: Omsk / Novosibirsk (OMST/NOVT)', value: 'OMST-6' },
+  { label: 'Russia: Vladivostok / Yakutsk (VLAT/YAKT)', value: 'VLAT-10' },
+  { label: 'UAE / Dubai / Abu Dhabi (GST)', value: 'GST-4' },
+  { label: 'Iran / Tehran (IRST)', value: 'IRST-3:30' },
+  { label: 'Australia Eastern: Sydney / Melbourne (AEST/AEDT)', value: 'AEST-10AEDT,M10.1.0,M4.1.0/3' },
+  { label: 'Australia Western: Perth (AWST)', value: 'AWST-8' },
+  { label: 'New Zealand / Auckland (NZST/NZDT)', value: 'NZST-12NZDT,M9.5.0/2,M4.5.0/3' },
+  { label: 'USA Eastern: New York / Miami (EST/EDT)', value: 'EST5EDT,M3.2.0,M11.1.0' },
+  { label: 'USA Central: Chicago / Houston (CST/CDT)', value: 'CST6CDT,M3.2.0,M11.1.0' },
+  { label: 'USA Mountain: Denver / Phoenix (MST/MDT)', value: 'MST7MDT,M3.2.0,M11.1.0' },
+  { label: 'USA Pacific: Los Angeles / Seattle (PST/PDT)', value: 'PST8PDT,M3.2.0,M11.1.0' },
+  { label: 'USA Alaska (AKST/AKDT)', value: 'AKST9AKDT,M3.2.0,M11.1.0' },
+  { label: 'USA Hawaii (HST)', value: 'HST10' },
+  { label: 'Canada Eastern: Toronto / Montreal (EST/EDT)', value: 'EST5EDT,M3.2.0,M11.1.0' },
+  { label: 'Canada Pacific: Vancouver (PST/PDT)', value: 'PST8PDT,M3.2.0,M11.1.0' },
+  { label: 'Brazil / Sao Paulo / Rio de Janeiro (BRT)', value: 'BRT3' },
+  { label: 'Mexico / Mexico City (CST/CDT)', value: 'CST6CDT,M4.1.0,M10.5.0' },
+  { label: 'South Africa / Johannesburg (SAST)', value: 'SAST-2' },
+  { label: 'Egypt / Cairo (EET)', value: 'EET-2' },
+  { label: 'UTC / GMT', value: 'GMT0' }
+];
+
+const NTP_SERVERS = [
+  { label: 'Default / Pool (pool.ntp.org)', value: 'pool.ntp.org' },
+  { label: 'Google (time.google.com)', value: 'time.google.com' },
+  { label: 'Apple (time.apple.com)', value: 'time.apple.com' },
+  { label: 'Microsoft (time.windows.com)', value: 'time.windows.com' },
+  { label: 'NIST (time.nist.gov)', value: 'time.nist.gov' },
+  { label: 'China (cn.pool.ntp.org)', value: 'cn.pool.ntp.org' },
+  { label: 'Europe (europe.pool.ntp.org)', value: 'europe.pool.ntp.org' },
+  { label: 'Asia (asia.pool.ntp.org)', value: 'asia.pool.ntp.org' },
+  { label: 'North America (north-america.pool.ntp.org)', value: 'north-america.pool.ntp.org' },
+  { label: 'South America (south-america.pool.ntp.org)', value: 'south-america.pool.ntp.org' },
+  { label: 'Oceania (oceania.pool.ntp.org)', value: 'oceania.pool.ntp.org' },
+  { label: 'Africa (africa.pool.ntp.org)', value: 'africa.pool.ntp.org' }
+];
+
 interface PropertiesPanelProps {
   selectedWidget: Widget | null;
   stickers: Sticker[];
@@ -165,8 +219,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
             </div>
           </div>
 
-          {/* Widget properties */}
-          {(selectedWidget.type === 'text' || selectedWidget.type === 'weather-temp' || selectedWidget.type === 'weather-humi' || selectedWidget.type === 'weather-brief' || selectedWidget.type === 'youtube-sub') && (
+          {(selectedWidget.type === 'text' || selectedWidget.type === 'weather-temp' || selectedWidget.type === 'weather-humi' || selectedWidget.type === 'weather-brief' || selectedWidget.type === 'youtube-sub' || selectedWidget.type === 'counter') && (
             <div className="properties-form-group" style={{ borderTop: '1px solid rgba(0,0,0,0.04)', paddingTop: '14px' }}>
               {selectedWidget.type === 'text' && (
                 <div className="prop-field">
@@ -177,6 +230,19 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                     onChange={(e) => handleChange('text', e.target.value)}
                     className="glass-input"
                     placeholder="Enter display text..."
+                  />
+                </div>
+              )}
+
+              {selectedWidget.type === 'counter' && (
+                <div className="prop-field">
+                  <label className="prop-label">Current Count</label>
+                  <input
+                    type="number"
+                    value={(selectedWidget as any).count ?? 0}
+                    onChange={(e) => handleChange('count', parseInt(e.target.value, 10) || 0)}
+                    className="glass-input"
+                    placeholder="Enter start count..."
                   />
                 </div>
               )}
@@ -289,7 +355,11 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                   <option value="none">Static (None)</option>
                   <option value="left">Scroll Left</option>
                   <option value="right">Scroll Right</option>
+                  <option value="top">Scroll Up</option>
+                  <option value="bottom">Scroll Down</option>
                   <option value="bounce">Horizontal Bounce</option>
+                  <option value="up-down">Up - Down Scroll</option>
+                  <option value="rotate-3d">3D Rotation</option>
                   <option value="wave">Wave/Wobble</option>
                   <option value="glow">Neon Glow</option>
                   <option value="twinkle">Twinkle Star</option>
@@ -701,6 +771,44 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                   <option value="HH:MM AM/PM">HH:MM AM/PM</option>
                 </select>
               </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '8px' }}>
+                <div className="prop-field">
+                  <label className="prop-label">Timezone</label>
+                  <select
+                    value={(selectedWidget as any).tzInfo || 'IST-5:30'}
+                    onChange={(e) => handleChange('tzInfo', e.target.value)}
+                    className="glass-input"
+                    style={{ padding: '8px 12px' }}
+                  >
+                    {(TIMEZONES.some(tz => tz.value === ((selectedWidget as any).tzInfo || 'IST-5:30')) 
+                      ? TIMEZONES 
+                      : [...TIMEZONES, { label: `Custom: ${(selectedWidget as any).tzInfo}`, value: (selectedWidget as any).tzInfo! }]
+                    ).map((tz) => (
+                      <option key={tz.value} value={tz.value}>
+                        {tz.label} ({tz.value})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="prop-field">
+                  <label className="prop-label">NTP Server</label>
+                  <select
+                    value={(selectedWidget as any).ntpServer || 'pool.ntp.org'}
+                    onChange={(e) => handleChange('ntpServer', e.target.value)}
+                    className="glass-input"
+                    style={{ padding: '8px 12px' }}
+                  >
+                    {(NTP_SERVERS.some(ntp => ntp.value === ((selectedWidget as any).ntpServer || 'pool.ntp.org')) 
+                      ? NTP_SERVERS 
+                      : [...NTP_SERVERS, { label: `Custom: ${(selectedWidget as any).ntpServer}`, value: (selectedWidget as any).ntpServer! }]
+                    ).map((ntp) => (
+                      <option key={ntp.value} value={ntp.value}>
+                        {ntp.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div className="prop-field">
                   <label className="prop-label">Text Style</label>
@@ -802,6 +910,45 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                   <option value="YYYY-MM-DD">YYYY-MM-DD</option>
                   <option value="DD MMM">DD Month (Short)</option>
                 </select>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '8px' }}>
+                <div className="prop-field">
+                  <label className="prop-label">Timezone</label>
+                  <select
+                    value={(selectedWidget as any).tzInfo || 'IST-5:30'}
+                    onChange={(e) => handleChange('tzInfo', e.target.value)}
+                    className="glass-input"
+                    style={{ padding: '8px 12px' }}
+                  >
+                    {(TIMEZONES.some(tz => tz.value === ((selectedWidget as any).tzInfo || 'IST-5:30')) 
+                      ? TIMEZONES 
+                      : [...TIMEZONES, { label: `Custom: ${(selectedWidget as any).tzInfo}`, value: (selectedWidget as any).tzInfo! }]
+                    ).map((tz) => (
+                      <option key={tz.value} value={tz.value}>
+                        {tz.label} ({tz.value})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="prop-field">
+                  <label className="prop-label">NTP Server</label>
+                  <select
+                    value={(selectedWidget as any).ntpServer || 'pool.ntp.org'}
+                    onChange={(e) => handleChange('ntpServer', e.target.value)}
+                    className="glass-input"
+                    style={{ padding: '8px 12px' }}
+                  >
+                    {(NTP_SERVERS.some(ntp => ntp.value === ((selectedWidget as any).ntpServer || 'pool.ntp.org')) 
+                      ? NTP_SERVERS 
+                      : [...NTP_SERVERS, { label: `Custom: ${(selectedWidget as any).ntpServer}`, value: (selectedWidget as any).ntpServer! }]
+                    ).map((ntp) => (
+                      <option key={ntp.value} value={ntp.value}>
+                        {ntp.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div className="prop-field">
@@ -1328,9 +1475,74 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
 
             </div>
           )}
+
+          {(selectedWidget.type === 'weather' || selectedWidget.type === 'weather-temp' || selectedWidget.type === 'weather-humi' || selectedWidget.type === 'weather-brief') && (
+            <div className="properties-form-group" style={{ borderTop: '1px solid rgba(0,0,0,0.04)', paddingTop: '14px' }}>
+              <div style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-light)', marginTop: '4px', marginBottom: '8px', borderBottom: '1px solid rgba(15, 23, 42, 0.05)', paddingBottom: '4px' }}>WEATHER API DETAILS</div>
+              
+              <div className="prop-field" style={{ marginBottom: '8px' }}>
+                <label className="prop-label">OpenWeatherMap API Key</label>
+                <input
+                  type="text"
+                  value={(selectedWidget as any).owmKey || ''}
+                  onChange={(e) => handleChange('owmKey', e.target.value)}
+                  className="glass-input"
+                  placeholder="Enter OWM API Key..."
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div className="prop-field">
+                  <label className="prop-label">Target City</label>
+                  <input
+                    type="text"
+                    value={(selectedWidget as any).owmCity || ''}
+                    onChange={(e) => handleChange('owmCity', e.target.value)}
+                    className="glass-input"
+                    placeholder="e.g. London"
+                  />
+                </div>
+                <div className="prop-field">
+                  <label className="prop-label">Country Code</label>
+                  <input
+                    type="text"
+                    value={(selectedWidget as any).owmCountry || ''}
+                    onChange={(e) => handleChange('owmCountry', e.target.value)}
+                    className="glass-input"
+                    placeholder="e.g. UK"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
           {selectedWidget.type === 'youtube-sub' && (
             <div className="properties-form-group" style={{ borderTop: '1px solid rgba(0,0,0,0.04)', paddingTop: '14px' }}>
-              <div style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-light)', marginTop: '4px', marginBottom: '8px', borderBottom: '1px solid rgba(15, 23, 42, 0.05)', paddingBottom: '4px' }}>YOUTUBE OPTIONS</div>
+              <div style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-light)', marginTop: '4px', marginBottom: '8px', borderBottom: '1px solid rgba(15, 23, 42, 0.05)', paddingBottom: '4px' }}>YOUTUBE CONFIGURATION</div>
+              
+              <div className="prop-field" style={{ marginBottom: '8px' }}>
+                <label className="prop-label">YouTube API Key</label>
+                <input
+                  type="text"
+                  value={(selectedWidget as any).ytApiKey || ''}
+                  onChange={(e) => handleChange('ytApiKey', e.target.value)}
+                  className="glass-input"
+                  placeholder="Enter API Key..."
+                />
+              </div>
+
+              <div className="prop-field" style={{ marginBottom: '8px' }}>
+                <label className="prop-label">YouTube Channel ID</label>
+                <input
+                  type="text"
+                  value={(selectedWidget as any).ytChannelId || ''}
+                  onChange={(e) => handleChange('ytChannelId', e.target.value)}
+                  className="glass-input"
+                  placeholder="e.g. UCFYguRGMmGpH493PDX5WmBA"
+                />
+              </div>
+
+              <div style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-light)', marginTop: '12px', marginBottom: '8px', borderBottom: '1px solid rgba(15, 23, 42, 0.05)', paddingBottom: '4px' }}>YOUTUBE OPTIONS</div>
               
               <div className="prop-field" style={{ flexDirection: 'row', alignItems: 'center', gap: '8px', marginTop: '4px', marginBottom: '4px' }}>
                 <input
@@ -1349,6 +1561,47 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
 
           {selectedWidget.type === 'clock' && (
             <div className="properties-form-group" style={{ borderTop: '1px solid rgba(0,0,0,0.04)', paddingTop: '14px' }}>
+
+              {/* TIMEZONE & NTP SECTION */}
+              <div style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-light)', marginTop: '4px', marginBottom: '8px', borderBottom: '1px solid rgba(15, 23, 42, 0.05)', paddingBottom: '4px' }}>TIMEZONE & NTP</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+                <div className="prop-field">
+                  <label className="prop-label">Select Timezone</label>
+                  <select
+                    value={(selectedWidget as any).tzInfo || 'IST-5:30'}
+                    onChange={(e) => handleChange('tzInfo', e.target.value)}
+                    className="glass-input"
+                    style={{ padding: '8px 12px' }}
+                  >
+                    {(TIMEZONES.some(tz => tz.value === ((selectedWidget as any).tzInfo || 'IST-5:30')) 
+                      ? TIMEZONES 
+                      : [...TIMEZONES, { label: `Custom: ${(selectedWidget as any).tzInfo}`, value: (selectedWidget as any).tzInfo! }]
+                    ).map((tz) => (
+                      <option key={tz.value} value={tz.value}>
+                        {tz.label} ({tz.value})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="prop-field">
+                  <label className="prop-label">NTP Server</label>
+                  <select
+                    value={(selectedWidget as any).ntpServer || 'pool.ntp.org'}
+                    onChange={(e) => handleChange('ntpServer', e.target.value)}
+                    className="glass-input"
+                    style={{ padding: '8px 12px' }}
+                  >
+                    {(NTP_SERVERS.some(ntp => ntp.value === ((selectedWidget as any).ntpServer || 'pool.ntp.org')) 
+                      ? NTP_SERVERS 
+                      : [...NTP_SERVERS, { label: `Custom: ${(selectedWidget as any).ntpServer}`, value: (selectedWidget as any).ntpServer! }]
+                    ).map((ntp) => (
+                      <option key={ntp.value} value={ntp.value}>
+                        {ntp.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
 
               {/* DATE SECTION */}
               <div style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-light)', marginTop: '4px', marginBottom: '8px', borderBottom: '1px solid rgba(15, 23, 42, 0.05)', paddingBottom: '4px' }}>DATE OPTIONS</div>
@@ -1432,7 +1685,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                     type="number"
                     min={0}
                     max={80}
-                    value={(selectedWidget as any).dateX !== undefined ? (selectedWidget as any).dateX : 20}
+                    value={(selectedWidget as any).dateX !== undefined ? (selectedWidget as any).dateX : 24}
                     onChange={(e) => handleChange('dateX', Number(e.target.value))}
                     className="glass-input"
                     style={{ padding: '8px 12px' }}
@@ -1577,7 +1830,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                     type="number"
                     min={0}
                     max={80}
-                    value={(selectedWidget as any).timeX !== undefined ? (selectedWidget as any).timeX : 20}
+                    value={(selectedWidget as any).timeX !== undefined ? (selectedWidget as any).timeX : 24}
                     onChange={(e) => handleChange('timeX', Number(e.target.value))}
                     className="glass-input"
                     style={{ padding: '8px 12px' }}

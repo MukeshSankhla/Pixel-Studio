@@ -178,6 +178,7 @@ interface DigitalTwinProps {
   onDragStart?: () => void;
   onDragEnd?: () => void;
   ytSubCount?: string;
+  onIncrementCounter?: (id: string) => void;
 }
 
 export const DigitalTwin: React.FC<DigitalTwinProps> = ({
@@ -189,7 +190,8 @@ export const DigitalTwin: React.FC<DigitalTwinProps> = ({
   onFrameUpdate,
   onDragStart,
   onDragEnd,
-  ytSubCount = '1.98K'
+  ytSubCount = '1.98K',
+  onIncrementCounter
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -459,6 +461,7 @@ export const DigitalTwin: React.FC<DigitalTwinProps> = ({
         const size = isTiny ? 1 : (fontSize <= 4 ? fontSize : Math.max(1, Math.floor(fontSize / 8)));
 
         const charWidth = isTiny ? 3 : 5 * size;
+        const charHeight = isTiny ? 5 : 8 * size;
         let charSpacing = isTiny ? 1 : 1 * size;
         if (fontFamily === 'bold') {
           charSpacing += 1;
@@ -477,6 +480,13 @@ export const DigitalTwin: React.FC<DigitalTwinProps> = ({
         } else if (effect === 'bounce') {
           const range = Math.max(0, wWidth - textWidth);
           scrollX = range > 0 ? (Math.sin(tick * 0.05 * speed) + 1) * 0.5 * range : 0;
+        } else if (effect === 'top') {
+          scrollY = wHeight - ((tick * speed * 0.4) % (wHeight + charHeight));
+        } else if (effect === 'bottom') {
+          scrollY = -charHeight + ((tick * speed * 0.4) % (wHeight + charHeight));
+        } else if (effect === 'up-down') {
+          const range = Math.max(0, wHeight - charHeight);
+          scrollY = range > 0 ? (Math.sin(tick * 0.05 * speed) + 1) * 0.5 * range : 0;
         }
 
         // Draw helper function to plot single pixel block
@@ -496,18 +506,20 @@ export const DigitalTwin: React.FC<DigitalTwinProps> = ({
         };
 
         // Draw function for a whole character
-        const drawChar = (bytes: number[], startX: number, startY: number, plotColor: string, alpha: number, isShadow: boolean) => {
+        const drawChar = (bytes: number[], startX: number, startY: number, plotColor: string, alpha: number, isShadow: boolean, cosTheta: number = 1.0) => {
           const numCols = isTiny ? 3 : 5;
           const numRows = isTiny ? 5 : 8;
           const scale = isTiny ? 1 : size;
+          const absCosTheta = Math.abs(cosTheta);
           for (let col = 0; col < numCols; col++) {
-            const b = bytes[col];
+            const drawCol = cosTheta < 0 ? (numCols - 1 - col) : col;
+            const b = bytes[drawCol];
             for (let row = 0; row < numRows; row++) {
               if ((b >> row) & 1) {
                 // Plot scale x scale block
                 for (let sy = 0; sy < scale; sy++) {
                   for (let sx = 0; sx < scale; sx++) {
-                    const px = Math.floor(startX + col * scale + sx);
+                    const px = Math.floor(startX + (col * scale + sx) * absCosTheta);
                     const py = Math.floor(startY + row * scale + sy);
 
                     let pixelColor = plotColor;
@@ -560,8 +572,21 @@ export const DigitalTwin: React.FC<DigitalTwinProps> = ({
               charScrollY = Math.sin(tick * 0.2 + (wx + i * 6) * 0.1) * 1.5;
             }
 
-            const startX = wx + scrollX + i * charStep + 1; // +1 drop shadow offset
-            const startY = wy + charScrollY + 1;            // +1 drop shadow offset
+            let startX = wx + scrollX + i * charStep;
+            const startY = wy + charScrollY;
+
+            let cosTheta = 1.0;
+            if (effect === 'rotate-3d') {
+              const theta = tick * 0.05 * speed;
+              cosTheta = Math.cos(theta);
+              const textCenter = wx + scrollX + textWidth / 2;
+              const defaultCharCenter = wx + scrollX + i * charStep + charWidth / 2;
+              const charCenter = textCenter + (defaultCharCenter - textCenter) * cosTheta;
+              startX = charCenter - (charWidth * Math.abs(cosTheta)) / 2;
+            }
+
+            const shadowStartX = startX + 1; // +1 drop shadow offset
+            const shadowStartY = startY + 1; // +1 drop shadow offset
 
             let finalAlpha = 1.0;
             if (effect === 'twinkle') {
@@ -570,7 +595,7 @@ export const DigitalTwin: React.FC<DigitalTwinProps> = ({
               finalAlpha = 0.2 + 0.8 * Math.abs(Math.sin(tick * 0.15));
             }
 
-            drawChar(bytes, startX, startY, actualShadowColor, finalAlpha, true);
+            drawChar(bytes, shadowStartX, shadowStartY, actualShadowColor, finalAlpha, true, cosTheta);
           }
         }
 
@@ -586,8 +611,18 @@ export const DigitalTwin: React.FC<DigitalTwinProps> = ({
             charScrollY = Math.sin(tick * 0.2 + (wx + i * 6) * 0.1) * 1.5;
           }
 
-          const startX = wx + scrollX + i * charStep;
+          let startX = wx + scrollX + i * charStep;
           const startY = wy + charScrollY;
+
+          let cosTheta = 1.0;
+          if (effect === 'rotate-3d') {
+            const theta = tick * 0.05 * speed;
+            cosTheta = Math.cos(theta);
+            const textCenter = wx + scrollX + textWidth / 2;
+            const defaultCharCenter = wx + scrollX + i * charStep + charWidth / 2;
+            const charCenter = textCenter + (defaultCharCenter - textCenter) * cosTheta;
+            startX = charCenter - (charWidth * Math.abs(cosTheta)) / 2;
+          }
 
           // Opacity effects
           let finalAlpha = 1.0;
@@ -606,7 +641,7 @@ export const DigitalTwin: React.FC<DigitalTwinProps> = ({
             }
           }
 
-          drawChar(bytes, startX, startY, charColor, finalAlpha, false);
+          drawChar(bytes, startX, startY, charColor, finalAlpha, false, cosTheta);
         }
       };
 
@@ -1030,9 +1065,9 @@ export const DigitalTwin: React.FC<DigitalTwinProps> = ({
           timeStr = `${String(hours24).padStart(2, '0')}:${minutes}`;
         }
 
-        const dateX = ck.dateX !== undefined ? ck.dateX : 20;
+        const dateX = ck.dateX !== undefined ? ck.dateX : 24;
         const dateY = ck.dateY !== undefined ? ck.dateY : 0;
-        const timeX = ck.timeX !== undefined ? ck.timeX : 20;
+        const timeX = ck.timeX !== undefined ? ck.timeX : 24;
         const timeY = ck.timeY !== undefined ? ck.timeY : 8;
 
         // Helper: resolve color based on "followTime" mode
@@ -1074,6 +1109,13 @@ export const DigitalTwin: React.FC<DigitalTwinProps> = ({
         const minStr = String(Math.floor(total / 60)).padStart(2, '0');
         const secStr = String(total % 60).padStart(2, '0');
         drawTextHelper(`${minStr}:${secStr}`, tr.x, tr.y, tr.width, tr.height, tr.color, tr.fontSize, tr.shadow, tr.shadowColorMode === 'custom' ? tr.shadowColor : 'auto', tr.scrollEffect, 4, tr.fontFamily);
+      }
+
+      // 8b. Draw Counter Widget
+      if (widget.type === 'counter') {
+        const c = widget as any;
+        const countVal = String(c.count ?? 0);
+        drawTextHelper(countVal, c.x, c.y, c.width, c.height, c.color, c.fontSize, c.shadow, c.shadowColorMode === 'custom' ? c.shadowColor : 'auto', c.scrollEffect, 4, c.fontFamily);
       }
 
       // 9. Draw Shape Widget
@@ -1462,6 +1504,9 @@ export const DigitalTwin: React.FC<DigitalTwinProps> = ({
         onDragStart();
       }
       onSelectWidget(clickedWidget.id);
+      if (clickedWidget.type === 'counter' && onIncrementCounter) {
+        onIncrementCounter(clickedWidget.id);
+      }
       setIsDragging(true);
       setDraggedWidgetId(clickedWidget.id);
       setDragOffset({

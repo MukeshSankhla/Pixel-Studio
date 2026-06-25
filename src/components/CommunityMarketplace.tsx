@@ -94,7 +94,7 @@ const ScenePreview: React.FC<{ widgets: any[] }> = ({ widgets }) => {
           ctx.fillStyle = 'rgba(234, 88, 12, 0.35)'; // translucent Cyber Orange for prebuilt effects
           ctx.fillRect(w.x, w.y, w.width, w.height);
         }
-      } else if (['text', 'date', 'time', 'clock', 'weather', 'weather-temp', 'weather-humi', 'weather-brief', 'timer', 'youtube-sub'].includes(w.type)) {
+      } else if (['text', 'date', 'time', 'clock', 'weather', 'weather-temp', 'weather-humi', 'weather-brief', 'timer', 'youtube-sub', 'counter'].includes(w.type)) {
         ctx.fillStyle = w.color || '#ffffff';
         const textH = Math.min(4, w.height);
         ctx.fillRect(w.x, w.y + (w.height - textH)/2, w.width, textH);

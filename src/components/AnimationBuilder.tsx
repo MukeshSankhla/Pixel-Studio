@@ -24,7 +24,7 @@ export const AnimationBuilder: React.FC<AnimationBuilderProps> = ({
   const [isPublished, setIsPublished] = useState(false);
   const [animName, setAnimName] = useState<string>('My Custom Animation');
   const [animType, setAnimType] = useState<'prebuilt' | 'custom'>('prebuilt');
-  const [prebuiltId, setPrebuiltId] = useState<AnimationPreset['prebuiltId']>('stars');
+  const [prebuiltId, setPrebuiltId] = useState<AnimationPreset['prebuiltId']>('aurora');
   
   // Sizing properties
   const [size, setSize] = useState<number>(80); // 80x16 Full size default
