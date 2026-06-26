@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import type { AnimationPreset } from '../types/studio';
 import { AssetPreview } from './AssetPreview';
 import { generateBlankGrid } from '../utils/defaultAssets';
+import { censorText } from '../utils/censor';
 import { Download, Upload, Save, Trash, Share2, Check, Play, Pause, Plus, Copy, Undo, Redo, FlipHorizontal, FlipVertical, Pencil, Eraser, Square, Circle, Slash, PaintBucket, Droplet, Image as ImageIcon, Flame, Sparkles, Zap, Activity, Waves, Rocket, SunDim, Atom, Sunrise, Sunset, Palmtree, CloudRain, Tornado, Spline, Wind, Palette, ArrowDown, Orbit, Infinity, Grid, RotateCw, Disc, Cpu, Route, Lightbulb, CircleDot, Dna, GitMerge, Maximize2, Bomb, ZapOff, PartyPopper, Sun, Target, Droplets, GlassWater, Gamepad2, Bug, Boxes, CloudLightning, ChevronLeft, ChevronRight, Moon } from 'lucide-react';
 import { drawPrebuiltEffect } from '../utils/prebuiltRenderer';
 
@@ -1491,7 +1492,7 @@ export const AnimationBuilder: React.FC<AnimationBuilderProps> = ({
                 className="glass-input"
                 style={{ fontSize: '14px', fontWeight: 'bold', width: '100%' }}
                 value={animName}
-                onChange={(e) => setAnimName(e.target.value)}
+                onChange={(e) => setAnimName(censorText(e.target.value))}
                 placeholder="Animation name..."
               />
             </div>

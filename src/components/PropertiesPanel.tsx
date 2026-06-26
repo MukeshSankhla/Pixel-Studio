@@ -1,6 +1,7 @@
 import React from 'react';
 import type { Widget, Sticker, ScrollEffect, BackgroundPreset, AnimationPreset } from '../types/studio';
 import { ArrowUp, ArrowDown } from 'lucide-react';
+import { censorText } from '../utils/censor';
 
 const TIMEZONES = [
   { label: 'India / New Delhi (IST)', value: 'IST-5:30' },
@@ -82,6 +83,10 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
 
   // Generic handle change
   const handleChange = (field: string, value: any) => {
+    let val = value;
+    if (field === 'text' && typeof val === 'string') {
+      val = censorText(val);
+    }
     let extra = {};
     if (field === 'shapeType') {
       if (value === 'hline') {
@@ -93,7 +98,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
       }
     }
 
-    let val = value;
+
     if (selectedWidget.type === 'shape') {
       const shapeType = field === 'shapeType' ? value : (selectedWidget as any).shapeType;
       if (shapeType === 'hline') {

@@ -3,6 +3,7 @@ import type { BackgroundPreset } from '../types/studio';
 import { AssetPreview } from './AssetPreview';
 import { generateBlankGrid } from '../utils/defaultAssets';
 import { Download, Upload, Save, Trash, Share2, Check, Undo, Redo, Pencil, Eraser, Square, Circle, Slash, PaintBucket, Droplet, FlipHorizontal, FlipVertical, Image as ImageIcon } from 'lucide-react';
+import { censorText } from '../utils/censor';
 
 interface BackgroundBuilderProps {
   backgrounds: BackgroundPreset[];
@@ -1065,7 +1066,7 @@ export const BackgroundBuilder: React.FC<BackgroundBuilderProps> = ({
                 className="glass-input"
                 style={{ fontSize: '14px', fontWeight: 'bold', width: '100%' }}
                 value={bgName}
-                onChange={(e) => setBgName(e.target.value)}
+                onChange={(e) => setBgName(censorText(e.target.value))}
                 placeholder="Background name..."
               />
             </div>

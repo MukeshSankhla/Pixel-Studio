@@ -44,11 +44,14 @@ import {
   GalleryHorizontal,
   Square,
   Share2,
-  Check
+  Check,
+  Sun,
+  Moon
 } from 'lucide-react';
 import { db } from './firebase';
 import { collection, addDoc } from 'firebase/firestore';
 import confetti from 'canvas-confetti';
+import { censorText } from './utils/censor';
 
 
 
@@ -73,8 +76,28 @@ const Youtube = (props: any) => (
 );
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'studio' | 'stickers' | 'backgrounds' | 'animations' | 'community'>('studio');
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    return (localStorage.getItem('pixel_studio_theme') as 'light' | 'dark') || 'dark';
+  });
+
+  useEffect(() => {
+    if (theme === 'dark') {
+      document.body.classList.add('dark-theme');
+    } else {
+      document.body.classList.remove('dark-theme');
+    }
+    localStorage.setItem('pixel_studio_theme', theme);
+  }, [theme]);
+
+  const [activeTab, setActiveTab] = useState<'studio' | 'stickers' | 'backgrounds' | 'animations' | 'community' | 'admin'>('studio');
   const [showShortcutsModal, setShowShortcutsModal] = useState<boolean>(false);
+
+  // Admin authentication states
+  const [adminUsername, setAdminUsername] = useState('');
+  const [adminPassword, setAdminPassword] = useState('');
+  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(() => {
+    return localStorage.getItem('pixel_studio_admin_logged_in') === 'true';
+  });
 
   // Storage States
   const [scenes, setScenes] = useState<Scene[]>([]);
@@ -285,6 +308,41 @@ export default function App() {
     return () => clearInterval(interval);
   }, [ytApiKey, ytChannelId]);
 
+  const handleTabChange = (tab: 'studio' | 'stickers' | 'backgrounds' | 'animations' | 'community' | 'admin') => {
+    setActiveTab(tab);
+    if (tab === 'admin') {
+      window.location.hash = '#/admin';
+    } else {
+      window.location.hash = `#/${tab}`;
+    }
+  };
+
+  // Listen for URL hash changes to detect the admin route
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash;
+      if (hash === '#/admin') {
+        setActiveTab('admin');
+      } else if (hash === '#/studio') {
+        setActiveTab('studio');
+      } else if (hash === '#/stickers') {
+        setActiveTab('stickers');
+      } else if (hash === '#/backgrounds') {
+        setActiveTab('backgrounds');
+      } else if (hash === '#/animations') {
+        setActiveTab('animations');
+      } else if (hash === '#/community') {
+        setActiveTab('community');
+      }
+    };
+
+    // Run once on load
+    handleHashChange();
+
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
 
 
   // Keyboard navigation/edit shortcuts for selected widgets and page operations
@@ -328,12 +386,13 @@ export default function App() {
         return;
       }
 
-      // Tab Switch Shortcuts: 1-5
-      if (key === '1') { e.preventDefault(); setActiveTab('studio'); return; }
-      if (key === '2') { e.preventDefault(); setActiveTab('stickers'); return; }
-      if (key === '3') { e.preventDefault(); setActiveTab('backgrounds'); return; }
-      if (key === '4') { e.preventDefault(); setActiveTab('animations'); return; }
-      if (key === '5') { e.preventDefault(); setActiveTab('community'); return; }
+      // Tab Switch Shortcuts: 1-6
+      if (key === '1') { e.preventDefault(); handleTabChange('studio'); return; }
+      if (key === '2') { e.preventDefault(); handleTabChange('stickers'); return; }
+      if (key === '3') { e.preventDefault(); handleTabChange('backgrounds'); return; }
+      if (key === '4') { e.preventDefault(); handleTabChange('animations'); return; }
+      if (key === '5') { e.preventDefault(); handleTabChange('community'); return; }
+      if (key === '6' && isAdminLoggedIn) { e.preventDefault(); handleTabChange('admin'); return; }
 
       // WiFi Connect trigger
       if (key === 'c') {
@@ -1106,7 +1165,7 @@ export default function App() {
       if (type === 'sticker') {
         collectionName = 'community_stickers';
         payload = {
-          name: data.name,
+          name: censorText(data.name || ''),
           width: data.width,
           height: data.height,
           pixels: data.pixels,
@@ -1115,7 +1174,7 @@ export default function App() {
       } else if (type === 'background') {
         collectionName = 'community_backgrounds';
         payload = {
-          name: data.name,
+          name: censorText(data.name || ''),
           bgType: data.bgType,
           colors: data.colors,
           cornerRadius: data.cornerRadius || 0,
@@ -1129,7 +1188,7 @@ export default function App() {
       } else if (type === 'animation') {
         collectionName = 'community_animations';
         payload = {
-          name: data.name,
+          name: censorText(data.name || ''),
           animType: data.animType,
           prebuiltId: data.prebuiltId || null,
           frames: data.frames || null,
@@ -1141,8 +1200,16 @@ export default function App() {
       } else if (type === 'scene') {
         collectionName = 'community_scenes';
         payload = {
-          name: data.name,
-          widgets: data.widgets,
+          name: censorText(data.name || ''),
+          widgets: (data.widgets || []).map((w: any) => {
+            if (w.type === 'text') {
+              return {
+                ...w,
+                text: censorText(w.text || '')
+              };
+            }
+            return w;
+          }),
           createdAt: Date.now()
         };
       }
@@ -1282,39 +1349,164 @@ export default function App() {
     setShowExportModal(false);
   };
 
+  const hashPassword = async (password: string): Promise<string> => {
+    const msgBuffer = new TextEncoder().encode(password);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  };
+
+  const handleAdminLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const hashedPassword = await hashPassword(adminPassword);
+    if (adminUsername === 'admin' && hashedPassword === '5fc028c87ff8d25d256ff513f059eb980f9f97eec4829c8bd9e91b079b3f85e8') {
+      setIsAdminLoggedIn(true);
+      localStorage.setItem('pixel_studio_admin_logged_in', 'true');
+      window.showToast('Logged in as administrator successfully!', 'success');
+      setAdminUsername('');
+      setAdminPassword('');
+    } else {
+      window.showToast('Invalid administrator credentials.', 'error');
+    }
+  };
+
+  const handleAdminLogout = () => {
+    setIsAdminLoggedIn(false);
+    localStorage.removeItem('pixel_studio_admin_logged_in');
+    window.showToast('Logged out of admin panel.', 'success');
+  };
+
+  const renderAdminPanel = () => {
+    if (isAdminLoggedIn) {
+      return (
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 'calc(100vh - 250px)', padding: '20px' }}>
+          <div className="glass-panel" style={{ width: '100%', maxWidth: '480px', padding: '40px', textAlign: 'center', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            <div style={{ background: 'rgba(255, 139, 19, 0.08)', width: '64px', height: '64px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto', border: '1px solid rgba(255, 139, 19, 0.2)' }}>
+              <Settings size={28} style={{ color: 'var(--accent)' }} />
+            </div>
+            <div>
+              <h2 style={{ fontSize: '22px', fontWeight: 700, color: 'var(--text-main)', marginBottom: '8px' }}>Admin Dashboard</h2>
+              <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>You are successfully authenticated as an Administrator.</p>
+            </div>
+            
+            <div className="glass-panel" style={{ padding: '16px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--glass-border)', borderRadius: '12px', fontSize: '13px', textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '8px', color: 'var(--text-main)' }}>
+              <div style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: '#10b981' }} />
+                Session Active
+              </div>
+              <p style={{ fontSize: '12px', color: 'var(--text-muted)', lineHeight: '1.4' }}>
+                You have administrative access to moderate the community assets. Go to the <strong>Community Hub</strong> to see delete controls on all published items.
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button 
+                onClick={() => handleTabChange('community')} 
+                className="btn btn-primary" 
+                style={{ flex: 1, padding: '12px', borderRadius: '10px', fontSize: '13px', fontWeight: 600 }}
+              >
+                Go to Community Hub
+              </button>
+              <button 
+                onClick={handleAdminLogout} 
+                className="btn btn-secondary" 
+                style={{ padding: '12px 20px', borderRadius: '10px', fontSize: '13px', fontWeight: 600 }}
+              >
+                Log Out
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 'calc(100vh - 250px)', padding: '20px' }}>
+        <form onSubmit={handleAdminLogin} className="glass-panel" style={{ width: '100%', maxWidth: '400px', padding: '36px', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <div style={{ textAlign: 'center' }}>
+            <h2 style={{ fontSize: '20px', fontWeight: 700, color: 'var(--text-main)', marginBottom: '6px' }}>Admin Login</h2>
+            <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Enter credentials to access community moderation tools</p>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.5px' }}>USERNAME</label>
+            <input 
+              type="text" 
+              value={adminUsername}
+              onChange={(e) => setAdminUsername(e.target.value)}
+              className="glass-input" 
+              placeholder="Enter username" 
+              required 
+              style={{ width: '100%', padding: '10px 14px', fontSize: '13px', borderRadius: '8px' }}
+            />
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.5px' }}>PASSWORD</label>
+            <input 
+              type="password" 
+              value={adminPassword}
+              onChange={(e) => setAdminPassword(e.target.value)}
+              className="glass-input" 
+              placeholder="Enter password" 
+              required 
+              style={{ width: '100%', padding: '10px 14px', fontSize: '13px', borderRadius: '8px' }}
+            />
+          </div>
+
+          <button 
+            type="submit" 
+            className="btn btn-primary" 
+            style={{ width: '100%', padding: '12px', borderRadius: '8px', fontSize: '13px', fontWeight: 600, marginTop: '8px' }}
+          >
+            Authenticate
+          </button>
+        </form>
+      </div>
+    );
+  };
+
   // Navigation Menu Renderer
   const renderNavBar = () => (
     <div className="top-nav-container">
       <button 
-        onClick={() => setActiveTab('studio')}
+        onClick={() => handleTabChange('studio')}
         className={`nav-tab-btn ${activeTab === 'studio' ? 'active' : ''}`}
       >
         <Monitor size={14} /> Studio Twin <kbd>1</kbd>
       </button>
       <button 
-        onClick={() => setActiveTab('stickers')}
+        onClick={() => handleTabChange('stickers')}
         className={`nav-tab-btn ${activeTab === 'stickers' ? 'active' : ''}`}
       >
         <StickerIcon size={14} /> Sticker Paint <kbd>2</kbd>
       </button>
       <button 
-        onClick={() => setActiveTab('backgrounds')}
+        onClick={() => handleTabChange('backgrounds')}
         className={`nav-tab-btn ${activeTab === 'backgrounds' ? 'active' : ''}`}
       >
         <Image size={14} /> Backgrounds <kbd>3</kbd>
       </button>
       <button 
-        onClick={() => setActiveTab('animations')}
+        onClick={() => handleTabChange('animations')}
         className={`nav-tab-btn ${activeTab === 'animations' ? 'active' : ''}`}
       >
         <Flame size={14} /> Animations <kbd>4</kbd>
       </button>
       <button 
-        onClick={() => setActiveTab('community')}
+        onClick={() => handleTabChange('community')}
         className={`nav-tab-btn ${activeTab === 'community' ? 'active' : ''}`}
       >
         <Sparkles size={14} className="text-amber-500" /> Community <kbd>5</kbd>
       </button>
+      {isAdminLoggedIn && (
+        <button 
+          onClick={() => handleTabChange('admin')}
+          className={`nav-tab-btn ${activeTab === 'admin' ? 'active' : ''}`}
+        >
+          <Settings size={14} style={{ color: 'var(--accent)' }} /> Admin <kbd>6</kbd>
+        </button>
+      )}
     </div>
   );
 
@@ -1368,7 +1560,7 @@ export default function App() {
               className="btn btn-pill"
               style={{ padding: '4px 10px', fontSize: '10px', borderRadius: '12px', background: isConnectedWifiLive ? 'var(--danger)' : (isConnectingWifiLive ? 'var(--accent)' : 'var(--primary)'), color: '#fff', border: 'none', transition: 'all 0.2s ease', display: 'inline-flex', alignItems: 'center', gap: '2px' }}
             >
-              {isConnectedWifiLive ? 'Disconnect' : (isConnectingWifiLive ? 'Connecting...' : 'Connect')} <kbd style={{ padding: '1px 3px', fontSize: '8px', marginLeft: '2px', borderBottom: '1px solid rgba(0,0,0,0.2)' }}>C</kbd>
+              {isConnectedWifiLive ? 'Disconnect' : (isConnectingWifiLive ? 'Connecting...' : 'Connect')} <kbd style={{ padding: '1px 3px', fontSize: '8px', marginLeft: '2px', borderBottom: '1px solid rgba(0,0,0,0.2)', background: '#fff', color: isConnectedWifiLive ? 'var(--danger)' : (isConnectingWifiLive ? 'var(--accent)' : 'var(--primary)') }}>C</kbd>
             </button>
           </div>
 
@@ -1386,6 +1578,15 @@ export default function App() {
             />
             <span style={{ fontSize: '10px', fontFamily: 'monospace', width: '20px', color: 'var(--text-muted)', textAlign: 'right', fontWeight: 600 }}>{brightness}</span>
           </div>
+
+          <button
+            onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+            className="btn btn-secondary btn-circle"
+            style={{ padding: '8px', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            title={theme === 'light' ? "Switch to Dark Mode" : "Switch to Light Mode"}
+          >
+            {theme === 'light' ? <Moon size={14} /> : <Sun size={14} />}
+          </button>
 
           <button
             onClick={() => setShowShortcutsModal(true)}
@@ -1467,7 +1668,7 @@ export default function App() {
                           <input
                             type="text"
                             value={renamingSceneValue}
-                            onChange={(e) => setRenamingSceneValue(e.target.value)}
+                            onChange={(e) => setRenamingSceneValue(censorText(e.target.value))}
                             onBlur={() => {
                               if (renamingSceneValue.trim()) {
                                 const updated = [...scenes];
@@ -1634,7 +1835,7 @@ export default function App() {
                           <input
                             type="text"
                             value={renamingWidgetValue}
-                            onChange={(e) => setRenamingWidgetValue(e.target.value)}
+                            onChange={(e) => setRenamingWidgetValue(censorText(e.target.value))}
                             onBlur={() => {
                               if (renamingWidgetValue.trim()) {
                                 const updatedWidgets = activeScene.widgets.map(w => w.id === widget.id ? { ...w, name: renamingWidgetValue } : w);
@@ -1806,7 +2007,15 @@ export default function App() {
             onDownloadAnimation={handleDownloadAnimation}
             onDownloadScene={handleDownloadScene}
             navBar={renderNavBar()}
+            isAdmin={isAdminLoggedIn}
           />
+        )}
+
+        {activeTab === 'admin' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', width: '100%' }}>
+            {renderNavBar()}
+            {renderAdminPanel()}
+          </div>
         )}
       </main>
 

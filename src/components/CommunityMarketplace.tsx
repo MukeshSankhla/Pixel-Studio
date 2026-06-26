@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import type { Sticker, BackgroundPreset, AnimationPreset, Scene, Widget } from '../types/studio';
-import { Search, Download, Check, Sparkles, Cloud, Palette, Layers, Play, X, Eye, LayoutGrid } from 'lucide-react';
+import { Search, Download, Check, Sparkles, Cloud, Palette, Layers, Play, X, Eye, LayoutGrid, Trash } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { AssetPreview } from './AssetPreview';
 import { db } from '../firebase';
-import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, limit, deleteDoc, doc } from 'firebase/firestore';
 import { DigitalTwin } from './DigitalTwin';
 
 interface CommunityMarketplaceProps {
@@ -13,6 +13,7 @@ interface CommunityMarketplaceProps {
   onDownloadAnimation: (anim: AnimationPreset) => void;
   onDownloadScene: (sc: Scene) => void;
   navBar?: React.ReactNode;
+  isAdmin?: boolean;
 }
 
 // Inline component to preview a scene layout onto an 80x16 canvas snapshot
@@ -124,13 +125,32 @@ export const CommunityMarketplace: React.FC<CommunityMarketplaceProps> = ({
   onDownloadBackground,
   onDownloadAnimation,
   onDownloadScene,
-  navBar
+  navBar,
+  isAdmin = false
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState<'scenes' | 'stickers' | 'backgrounds' | 'animations'>('scenes');
   const [downloadedIds, setDownloadedIds] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [previewAsset, setPreviewAsset] = useState<{ asset: any; type: 'scene' | 'sticker' | 'background' | 'animation' } | null>(null);
+
+  const handleDeleteCommunityAsset = async (category: 'scenes' | 'stickers' | 'backgrounds' | 'animations', id: string) => {
+    if (!window.confirm("Are you sure you want to delete this asset from the Community Hub?")) return;
+    try {
+      let collectionName = '';
+      if (category === 'scenes') collectionName = 'community_scenes';
+      else if (category === 'stickers') collectionName = 'community_stickers';
+      else if (category === 'backgrounds') collectionName = 'community_backgrounds';
+      else if (category === 'animations') collectionName = 'community_animations';
+
+      await deleteDoc(doc(db, collectionName, id));
+      window.showToast("Asset successfully deleted from Community Hub!", "success");
+      fetchCommunityData();
+    } catch (err) {
+      console.error("Delete asset error:", err);
+      window.showToast("Failed to delete asset from Community Hub.", "error");
+    }
+  };
 
   const getPreviewWidgetsAndStickers = () => {
     if (!previewAsset) return { widgets: [], stickers: [] };
@@ -579,7 +599,35 @@ export const CommunityMarketplace: React.FC<CommunityMarketplaceProps> = ({
         /* Assets Grid */
         <div className="community-gallery-grid">
           {activeTab === 'scenes' && getFilteredScenes().map(sc => (
-            <div key={sc.id} className="glass-panel community-asset-card glass-panel-hover" onClick={() => setPreviewAsset({ asset: sc, type: 'scene' })}>
+            <div key={sc.id} className="glass-panel community-asset-card glass-panel-hover" style={{ position: 'relative' }} onClick={() => setPreviewAsset({ asset: sc, type: 'scene' })}>
+              {isAdmin && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteCommunityAsset('scenes', sc.id);
+                  }}
+                  className="btn btn-danger btn-circle"
+                  style={{
+                    position: 'absolute',
+                    top: '8px',
+                    right: '8px',
+                    width: '28px',
+                    height: '28px',
+                    padding: 0,
+                    zIndex: 20,
+                    borderRadius: '50%',
+                    background: 'rgba(239, 68, 68, 0.9)',
+                    color: '#fff',
+                    border: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                  title="Delete from Community Hub"
+                >
+                  <Trash size={12} />
+                </button>
+              )}
               <div className="community-preview-wrapper" style={{ marginBottom: '12px' }}>
                 <div style={{ width: '100%', aspectRatio: '80 / 16', borderRadius: '6px', overflow: 'hidden', border: '1px solid rgba(0,0,0,0.08)' }}>
                   <ScenePreview widgets={sc.widgets} />
@@ -593,7 +641,35 @@ export const CommunityMarketplace: React.FC<CommunityMarketplaceProps> = ({
           ))}
 
           {activeTab === 'stickers' && getFilteredStickers().map(st => (
-            <div key={st.id} className="glass-panel community-asset-card glass-panel-hover" onClick={() => setPreviewAsset({ asset: st, type: 'sticker' })}>
+            <div key={st.id} className="glass-panel community-asset-card glass-panel-hover" style={{ position: 'relative' }} onClick={() => setPreviewAsset({ asset: st, type: 'sticker' })}>
+              {isAdmin && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteCommunityAsset('stickers', st.id);
+                  }}
+                  className="btn btn-danger btn-circle"
+                  style={{
+                    position: 'absolute',
+                    top: '8px',
+                    right: '8px',
+                    width: '28px',
+                    height: '28px',
+                    padding: 0,
+                    zIndex: 20,
+                    borderRadius: '50%',
+                    background: 'rgba(239, 68, 68, 0.9)',
+                    color: '#fff',
+                    border: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                  title="Delete from Community Hub"
+                >
+                  <Trash size={12} />
+                </button>
+              )}
               <div className="community-preview-wrapper" style={{ marginBottom: '12px' }}>
                 <div 
                   style={{ 
@@ -620,7 +696,35 @@ export const CommunityMarketplace: React.FC<CommunityMarketplaceProps> = ({
           ))}
 
           {activeTab === 'backgrounds' && getFilteredBackgrounds().map(bg => (
-            <div key={bg.id} className="glass-panel community-asset-card glass-panel-hover" onClick={() => setPreviewAsset({ asset: bg, type: 'background' })}>
+            <div key={bg.id} className="glass-panel community-asset-card glass-panel-hover" style={{ position: 'relative' }} onClick={() => setPreviewAsset({ asset: bg, type: 'background' })}>
+              {isAdmin && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteCommunityAsset('backgrounds', bg.id);
+                  }}
+                  className="btn btn-danger btn-circle"
+                  style={{
+                    position: 'absolute',
+                    top: '8px',
+                    right: '8px',
+                    width: '28px',
+                    height: '28px',
+                    padding: 0,
+                    zIndex: 20,
+                    borderRadius: '50%',
+                    background: 'rgba(239, 68, 68, 0.9)',
+                    color: '#fff',
+                    border: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                  title="Delete from Community Hub"
+                >
+                  <Trash size={12} />
+                </button>
+              )}
               <div className="community-preview-wrapper" style={{ marginBottom: '12px' }}>
                 <div 
                   style={{
@@ -645,7 +749,35 @@ export const CommunityMarketplace: React.FC<CommunityMarketplaceProps> = ({
           ))}
 
           {activeTab === 'animations' && getFilteredAnimations().map(an => (
-            <div key={an.id} className="glass-panel community-asset-card glass-panel-hover" onClick={() => setPreviewAsset({ asset: an, type: 'animation' })}>
+            <div key={an.id} className="glass-panel community-asset-card glass-panel-hover" style={{ position: 'relative' }} onClick={() => setPreviewAsset({ asset: an, type: 'animation' })}>
+              {isAdmin && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteCommunityAsset('animations', an.id);
+                  }}
+                  className="btn btn-danger btn-circle"
+                  style={{
+                    position: 'absolute',
+                    top: '8px',
+                    right: '8px',
+                    width: '28px',
+                    height: '28px',
+                    padding: 0,
+                    zIndex: 20,
+                    borderRadius: '50%',
+                    background: 'rgba(239, 68, 68, 0.9)',
+                    color: '#fff',
+                    border: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                  title="Delete from Community Hub"
+                >
+                  <Trash size={12} />
+                </button>
+              )}
               <div className="community-preview-wrapper" style={{ marginBottom: '12px' }}>
                 <div style={{ width: '100%', aspectRatio: '80 / 16', borderRadius: '8px', background: '#0f172a', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
                   {an.frames && an.frames.length > 0 ? (
