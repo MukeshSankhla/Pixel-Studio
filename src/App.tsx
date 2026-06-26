@@ -965,20 +965,7 @@ export default function App() {
     const newScene: Scene = {
       id: `scene-${Date.now()}`,
       name: `Scene Layout ${scenes.length + 1}`,
-      widgets: [
-        {
-          id: `bg-${Date.now()}`,
-          type: 'background',
-          name: 'Solid Dark BG',
-          x: 0,
-          y: 0,
-          width: 80,
-          height: 16,
-          zIndex: 0,
-          bgType: 'solid',
-          colors: ['#0f172a']
-        }
-      ],
+      widgets: [],
       createdAt: Date.now()
     };
     const nextScenes = [...scenes, newScene];
