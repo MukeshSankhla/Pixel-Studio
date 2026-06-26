@@ -515,9 +515,12 @@ unsigned long lastPhysicalInteractionTime = 0;
 enum AppState {
   STATE_SCENE_PLAY,
   STATE_TIMER_ADJUST,
-  STATE_MENU_NAV
+  STATE_MENU_NAV,
+  STATE_BRIGHTNESS_ADJUST
 };
 AppState currentState = STATE_SCENE_PLAY;
+int menuCursor = 0;
+int currentBrightness = (${brightness} * 100) / 255;
 
 // Preset Scenes count
 const int NUM_SCENES = ${scenes.length};
@@ -678,6 +681,7 @@ void drawCustomAnimation(const uint32_t* const* frames, int framesCount, int x, 
 void drawShape(String shapeType, int x, int y, int w, int h, uint32_t color, bool filled, uint32_t borderColor, int borderWidth, String motion = "none", int speed = 4, int cornerRadius = 0);
 
 String getSceneName(int idx) {
+  if (idx == NUM_SCENES) return "BRIGHTNESS";
   switch (idx) {
     ${scenes.map((scene, i) => `case ${i}: return "${scene.name.toUpperCase().replace(/"/g, '\\"')}";`).join('\n    ')}
     default: return "UNKNOWN";
@@ -700,7 +704,7 @@ void setup() {
 
   // Setup Led Strip
   matrix.begin();
-  matrix.setBrightness(${brightness});
+  matrix.setBrightness((currentBrightness * 255) / 100);
   matrix.show();
 
   // Setup Encoder Pins
@@ -848,9 +852,10 @@ void loop() {
     } 
     else if (currentState == STATE_MENU_NAV) {
       // Menu navigation screen (no solid background, displays two options)
-      int firstIdx = currentSceneIndex;
-      if (firstIdx > NUM_SCENES - 2) {
-        firstIdx = NUM_SCENES - 2;
+      int menuSize = NUM_SCENES + 1;
+      int firstIdx = menuCursor;
+      if (firstIdx > menuSize - 2) {
+        firstIdx = menuSize - 2;
       }
       if (firstIdx < 0) {
         firstIdx = 0;
@@ -858,19 +863,44 @@ void loop() {
       int secondIdx = firstIdx + 1;
       
       String firstOpt = getSceneName(firstIdx);
-      String secondOpt = (secondIdx < NUM_SCENES) ? getSceneName(secondIdx) : "";
+      String secondOpt = (secondIdx < menuSize) ? getSceneName(secondIdx) : "";
       
-      if (currentSceneIndex == firstIdx) {
+      if (menuCursor == firstIdx) {
         drawText("> " + firstOpt, 4, 1, 0xffffff, 1, 0, 0, 0);
       } else {
         drawText("  " + firstOpt, 4, 1, 0x8c8c8c, 1, 0, 0, 0);
       }
       
-      if (secondIdx < NUM_SCENES) {
-        if (currentSceneIndex == secondIdx) {
+      if (secondIdx < menuSize) {
+        if (menuCursor == secondIdx) {
           drawText("> " + secondOpt, 4, 9, 0xffffff, 1, 0, 0, 0);
         } else {
           drawText("  " + secondOpt, 4, 9, 0x8c8c8c, 1, 0, 0, 0);
+        }
+      }
+    }
+    else if (currentState == STATE_BRIGHTNESS_ADJUST) {
+      // Brightness page
+      char brightStr[20];
+      sprintf(brightStr, "BRIGHT: %d%%", currentBrightness);
+      drawText(String(brightStr), 4, 1, 0x00ffcc, 1, 0, 0, 0);
+      
+      // Draw progress bar background track
+      for (int px = 4; px <= 75; px++) {
+        for (int py = 10; py <= 13; py++) {
+          setPixel(px, py, 0x222222);
+        }
+      }
+      
+      // Draw filled bar
+      int barWidth = (currentBrightness * 72) / 100;
+      for (int px = 4; px < 4 + barWidth; px++) {
+        for (int py = 10; py <= 13; py++) {
+          float ratio = (float)(px - 4) / 72.0;
+          uint8_t r = (uint8_t)(0x06 * (1.0 - ratio) + 0x3b * ratio);
+          uint8_t g = (uint8_t)(0xb6 * (1.0 - ratio) + 0x82 * ratio);
+          uint8_t b = (uint8_t)(0xd4 * (1.0 - ratio) + 0xf6 * ratio);
+          setPixel(px, py, r, g, b);
         }
       }
     }
@@ -912,19 +942,37 @@ void checkEncoder() {
     
     int step = (diff > 0) ? 1 : -1;
     
-    if (currentState == STATE_SCENE_PLAY || currentState == STATE_MENU_NAV) {
+    if (currentState == STATE_SCENE_PLAY) {
       // Navigate scenes
       currentSceneIndex = (currentSceneIndex + step) % NUM_SCENES;
       if (currentSceneIndex < 0) currentSceneIndex += NUM_SCENES;
       Serial.print("Switched scene to: ");
       Serial.println(currentSceneIndex);
     } 
+    else if (currentState == STATE_MENU_NAV) {
+      // Navigate menu options
+      int menuSize = NUM_SCENES + 1;
+      menuCursor = (menuCursor + step) % menuSize;
+      if (menuCursor < 0) menuCursor += menuSize;
+      Serial.print("Switched menu cursor to: ");
+      Serial.println(menuCursor);
+    }
     else if (currentState == STATE_TIMER_ADJUST) {
       // Adjust timer duration (adds/subtracts 10 seconds per click)
       countdownSeconds += step * 10;
       if (countdownSeconds < 10) countdownSeconds = 10;
       Serial.print("Countdown adjusted to: ");
       Serial.println(countdownSeconds);
+    }
+    else if (currentState == STATE_BRIGHTNESS_ADJUST) {
+      // Adjust brightness in 1% steps
+      currentBrightness += step;
+      if (currentBrightness < 0) currentBrightness = 0;
+      if (currentBrightness > 100) currentBrightness = 100;
+      matrix.setBrightness((currentBrightness * 255) / 100);
+      Serial.print("Brightness adjusted to: ");
+      Serial.print(currentBrightness);
+      Serial.println("%");
     }
   }
 }
@@ -965,7 +1013,10 @@ void checkButton() {
       Serial.println("Double Push: Opening Menu");
       if (currentState == STATE_MENU_NAV) {
         currentState = STATE_SCENE_PLAY;
+      } else if (currentState == STATE_TIMER_ADJUST || currentState == STATE_BRIGHTNESS_ADJUST) {
+        currentState = STATE_SCENE_PLAY;
       } else {
+        menuCursor = currentSceneIndex;
         currentState = STATE_MENU_NAV;
       }
     } else if (clickCount == 1) {
@@ -993,7 +1044,14 @@ void checkButton() {
         timerRunning = !timerRunning; // Start/Stop timer
         currentState = STATE_SCENE_PLAY;
       } else if (currentState == STATE_MENU_NAV) {
-        currentState = STATE_SCENE_PLAY; // Select and play
+        if (menuCursor == NUM_SCENES) {
+          currentState = STATE_BRIGHTNESS_ADJUST;
+        } else {
+          currentSceneIndex = menuCursor;
+          currentState = STATE_SCENE_PLAY; // Select and play
+        }
+      } else if (currentState == STATE_BRIGHTNESS_ADJUST) {
+        currentState = STATE_MENU_NAV;
       }
     }
     buttonPressed = false;
