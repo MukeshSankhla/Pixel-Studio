@@ -686,7 +686,7 @@ export const DigitalTwin: React.FC<DigitalTwinProps> = ({
           // Default to DD/MM/YYYY
           formatted = `${day}/${monthNum}/${year}`;
         }
-        drawTextHelper(formatted, dt.x, dt.y, dt.width, dt.height, dt.color, dt.fontSize, dt.shadow, dt.shadowColorMode === 'custom' ? dt.shadowColor : 'auto', dt.scrollEffect, 4, dt.fontFamily);
+        drawTextHelper(formatted, dt.x, dt.y, dt.width, dt.height, dt.color, dt.fontSize, dt.shadow, dt.shadowColorMode === 'custom' ? dt.shadowColor : 'auto', dt.scrollEffect, 4, dt.fontFamily, (dt as any).rainbow);
       }
 
       // 6. Draw Time Widget
@@ -708,7 +708,7 @@ export const DigitalTwin: React.FC<DigitalTwinProps> = ({
           // Default to HH:MM:SS
           formatted = `${String(hours24).padStart(2, '0')}:${minutes}:${seconds}`;
         }
-        drawTextHelper(formatted, tm.x, tm.y, tm.width, tm.height, tm.color, tm.fontSize, tm.shadow, tm.shadowColorMode === 'custom' ? tm.shadowColor : 'auto', tm.scrollEffect, 4, tm.fontFamily);
+        drawTextHelper(formatted, tm.x, tm.y, tm.width, tm.height, tm.color, tm.fontSize, tm.shadow, tm.shadowColorMode === 'custom' ? tm.shadowColor : 'auto', tm.scrollEffect, 4, tm.fontFamily, (tm as any).rainbow);
       }
 
       // 7. Draw Weather Widget
@@ -904,9 +904,9 @@ export const DigitalTwin: React.FC<DigitalTwinProps> = ({
           const textW    = wt.width - textOffX;
           const humiW    = wt.width - humiOffX;
           const briefW   = wt.width - briefOffX;
-          drawTextHelper(temp,  textAbsX,           textAbsY,           textW,  8, tempColor,  tempSize,  tempShad,  tempShadCol,  'none', 4, tempFamily);
-          drawTextHelper(humi,  wt.x + humiOffX,  wt.y + humiOffY,  humiW,  8, humiColor,  humiSize,  humiShad,  humiShadCol,  'none', 4, humiFamily);
-          drawTextHelper(brief, wt.x + briefOffX, wt.y + briefOffY, briefW, 8, briefColor, briefSize, briefShad, briefShadCol, 'none', 4, briefFamily);
+          drawTextHelper(temp,  textAbsX,           textAbsY,           textW,  8, tempColor,  tempSize,  tempShad,  tempShadCol,  'none', 4, tempFamily, wt.rainbow);
+          drawTextHelper(humi,  wt.x + humiOffX,  wt.y + humiOffY,  humiW,  8, humiColor,  humiSize,  humiShad,  humiShadCol,  'none', 4, humiFamily, wt.rainbow);
+          drawTextHelper(brief, wt.x + briefOffX, wt.y + briefOffY, briefW, 8, briefColor, briefSize, briefShad, briefShadCol, 'none', 4, briefFamily, wt.rainbow);
         }
       }
 
@@ -922,7 +922,7 @@ export const DigitalTwin: React.FC<DigitalTwinProps> = ({
         else if (cond === 'mist') temp = '15.0C';
 
         const shadCol = wt.shadowColorMode === 'custom' ? (wt.shadowColor || '#000000') : 'auto';
-        drawTextHelper(temp, wt.x, wt.y, wt.width, wt.height, wt.color, wt.fontSize !== undefined ? wt.fontSize : 1, wt.shadow, shadCol, wt.scrollEffect || 'none', 4, wt.fontFamily || 'standard');
+        drawTextHelper(temp, wt.x, wt.y, wt.width, wt.height, wt.color, wt.fontSize !== undefined ? wt.fontSize : 1, wt.shadow, shadCol, wt.scrollEffect || 'none', 4, wt.fontFamily || 'standard', wt.rainbow);
       }
 
       // 7.2 Draw Weather Humidity Widget
@@ -937,7 +937,7 @@ export const DigitalTwin: React.FC<DigitalTwinProps> = ({
         else if (cond === 'mist') humi = '95%';
 
         const shadCol = wt.shadowColorMode === 'custom' ? (wt.shadowColor || '#000000') : 'auto';
-        drawTextHelper(humi, wt.x, wt.y, wt.width, wt.height, wt.color, wt.fontSize !== undefined ? wt.fontSize : 1, wt.shadow, shadCol, wt.scrollEffect || 'none', 4, wt.fontFamily || 'standard');
+        drawTextHelper(humi, wt.x, wt.y, wt.width, wt.height, wt.color, wt.fontSize !== undefined ? wt.fontSize : 1, wt.shadow, shadCol, wt.scrollEffect || 'none', 4, wt.fontFamily || 'standard', wt.rainbow);
       }
 
       // 7.3 Draw Weather Brief Widget
@@ -952,7 +952,7 @@ export const DigitalTwin: React.FC<DigitalTwinProps> = ({
         else if (cond === 'mist') brief = 'Misty';
 
         const shadCol = wt.shadowColorMode === 'custom' ? (wt.shadowColor || '#000000') : 'auto';
-        drawTextHelper(brief, wt.x, wt.y, wt.width, wt.height, wt.color, wt.fontSize !== undefined ? wt.fontSize : 1, wt.shadow, shadCol, wt.scrollEffect || 'none', 4, wt.fontFamily || 'bold');
+        drawTextHelper(brief, wt.x, wt.y, wt.width, wt.height, wt.color, wt.fontSize !== undefined ? wt.fontSize : 1, wt.shadow, shadCol, wt.scrollEffect || 'none', 4, wt.fontFamily || 'bold', wt.rainbow);
       }
 
       // 7.4 Draw YouTube Subscription Count Widget
@@ -982,7 +982,8 @@ export const DigitalTwin: React.FC<DigitalTwinProps> = ({
           ytShadowCol,
           yt.scrollEffect || 'none',
           4,
-          ytFamily
+          ytFamily,
+          yt.rainbow
         );
       }
 
@@ -1108,14 +1109,14 @@ export const DigitalTwin: React.FC<DigitalTwinProps> = ({
         const total = tr.durationSeconds;
         const minStr = String(Math.floor(total / 60)).padStart(2, '0');
         const secStr = String(total % 60).padStart(2, '0');
-        drawTextHelper(`${minStr}:${secStr}`, tr.x, tr.y, tr.width, tr.height, tr.color, tr.fontSize, tr.shadow, tr.shadowColorMode === 'custom' ? tr.shadowColor : 'auto', tr.scrollEffect, 4, tr.fontFamily);
+        drawTextHelper(`${minStr}:${secStr}`, tr.x, tr.y, tr.width, tr.height, tr.color, tr.fontSize, tr.shadow, tr.shadowColorMode === 'custom' ? tr.shadowColor : 'auto', tr.scrollEffect, 4, tr.fontFamily, (tr as any).rainbow);
       }
 
       // 8b. Draw Counter Widget
       if (widget.type === 'counter') {
         const c = widget as any;
         const countVal = String(c.count ?? 0);
-        drawTextHelper(countVal, c.x, c.y, c.width, c.height, c.color, c.fontSize, c.shadow, c.shadowColorMode === 'custom' ? c.shadowColor : 'auto', c.scrollEffect, 4, c.fontFamily);
+        drawTextHelper(countVal, c.x, c.y, c.width, c.height, c.color, c.fontSize, c.shadow, c.shadowColorMode === 'custom' ? c.shadowColor : 'auto', c.scrollEffect, 4, c.fontFamily, c.rainbow);
       }
 
       // 9. Draw Shape Widget

@@ -240,7 +240,7 @@ export function generateArduinoCode(options: CodeGenOptions): string {
         const text = w;
         const colorHex = text.color.replace('#', '0xff');
         const shadowColHex = text.shadowColorMode === 'custom' ? text.shadowColor.replace('#', '0xff') : '0';
-        sceneFunctions += `  drawText("${text.text}", ${text.x}, ${text.y}, ${text.width}, ${text.height}, ${colorHex}, ${text.fontSize}, ${text.shadow ? 'true' : 'false'}, ${shadowColHex}, "${text.scrollEffect}", ${text.scrollSpeed || 4}, ${text.fontFamily === 'bold' ? 'true' : 'false'});\n`;
+        sceneFunctions += `  drawText("${text.text}", ${text.x}, ${text.y}, ${text.width}, ${text.height}, ${colorHex}, ${text.fontSize}, ${text.shadow ? 'true' : 'false'}, ${shadowColHex}, "${text.scrollEffect}", ${text.scrollSpeed || 4}, ${text.fontFamily === 'bold' ? 'true' : 'false'}, ${text.rainbow ? 'true' : 'false'});\n`;
       } 
       else if (w.type === 'sticker') {
         const st = w as any;
@@ -252,12 +252,12 @@ export function generateArduinoCode(options: CodeGenOptions): string {
       else if (w.type === 'time') {
         const time = w;
         const shadowColHex = time.shadowColorMode === 'custom' ? time.shadowColor.replace('#', '0xff') : '0';
-        sceneFunctions += `  drawLocalTime(${time.x}, ${time.y}, ${time.width}, ${time.height}, ${time.color.replace('#', '0xff')}, ${time.fontSize}, "${time.format}", ${time.shadow ? 'true' : 'false'}, ${shadowColHex}, "${time.scrollEffect || 'none'}", ${(time as any).scrollSpeed || 4}, ${time.fontFamily === 'bold' ? 'true' : 'false'});\n`;
+        sceneFunctions += `  drawLocalTime(${time.x}, ${time.y}, ${time.width}, ${time.height}, ${time.color.replace('#', '0xff')}, ${time.fontSize}, "${time.format}", ${time.shadow ? 'true' : 'false'}, ${shadowColHex}, "${time.scrollEffect || 'none'}", ${(time as any).scrollSpeed || 4}, ${time.fontFamily === 'bold' ? 'true' : 'false'}, ${(time as any).rainbow ? 'true' : 'false'});\n`;
       }
       else if (w.type === 'date') {
         const dt = w;
         const shadowColHex = dt.shadowColorMode === 'custom' ? dt.shadowColor.replace('#', '0xff') : '0';
-        sceneFunctions += `  drawLocalDate(${dt.x}, ${dt.y}, ${dt.width}, ${dt.height}, ${dt.color.replace('#', '0xff')}, ${dt.fontSize}, "${dt.format}", ${dt.shadow ? 'true' : 'false'}, ${shadowColHex}, "${dt.scrollEffect || 'none'}", ${(dt as any).scrollSpeed || 4}, ${dt.fontFamily === 'bold' ? 'true' : 'false'});\n`;
+        sceneFunctions += `  drawLocalDate(${dt.x}, ${dt.y}, ${dt.width}, ${dt.height}, ${dt.color.replace('#', '0xff')}, ${dt.fontSize}, "${dt.format}", ${dt.shadow ? 'true' : 'false'}, ${shadowColHex}, "${dt.scrollEffect || 'none'}", ${(dt as any).scrollSpeed || 4}, ${dt.fontFamily === 'bold' ? 'true' : 'false'}, ${(dt as any).rainbow ? 'true' : 'false'});\n`;
       }
             else if (w.type === 'weather') {
         const wt = w as any;
@@ -296,17 +296,17 @@ export function generateArduinoCode(options: CodeGenOptions): string {
       else if (w.type === 'weather-temp') {
         const wt = w as any;
         const shadowColHex = wt.shadowColorMode === 'custom' ? wt.shadowColor.replace('#', '0xff') : '0';
-        sceneFunctions += `  drawWeatherTemp(${wt.x}, ${wt.y}, ${wt.width}, ${wt.height}, ${wt.color.replace('#', '0xff')}, ${wt.fontSize}, ${wt.shadow ? 'true' : 'false'}, ${shadowColHex}, "${wt.scrollEffect || 'none'}", ${(wt as any).scrollSpeed || 4}, ${wt.fontFamily === 'bold' ? 'true' : 'false'});\n`;
+        sceneFunctions += `  drawWeatherTemp(${wt.x}, ${wt.y}, ${wt.width}, ${wt.height}, ${wt.color.replace('#', '0xff')}, ${wt.fontSize}, ${wt.shadow ? 'true' : 'false'}, ${shadowColHex}, "${wt.scrollEffect || 'none'}", ${(wt as any).scrollSpeed || 4}, ${wt.fontFamily === 'bold' ? 'true' : 'false'}, ${wt.rainbow ? 'true' : 'false'});\n`;
       }
       else if (w.type === 'weather-humi') {
         const wt = w as any;
         const shadowColHex = wt.shadowColorMode === 'custom' ? wt.shadowColor.replace('#', '0xff') : '0';
-        sceneFunctions += `  drawWeatherHumi(${wt.x}, ${wt.y}, ${wt.width}, ${wt.height}, ${wt.color.replace('#', '0xff')}, ${wt.fontSize}, ${wt.shadow ? 'true' : 'false'}, ${shadowColHex}, "${wt.scrollEffect || 'none'}", ${(wt as any).scrollSpeed || 4}, ${wt.fontFamily === 'bold' ? 'true' : 'false'});\n`;
+        sceneFunctions += `  drawWeatherHumi(${wt.x}, ${wt.y}, ${wt.width}, ${wt.height}, ${wt.color.replace('#', '0xff')}, ${wt.fontSize}, ${wt.shadow ? 'true' : 'false'}, ${shadowColHex}, "${wt.scrollEffect || 'none'}", ${(wt as any).scrollSpeed || 4}, ${wt.fontFamily === 'bold' ? 'true' : 'false'}, ${wt.rainbow ? 'true' : 'false'});\n`;
       }
       else if (w.type === 'weather-brief') {
         const wt = w as any;
         const shadowColHex = wt.shadowColorMode === 'custom' ? wt.shadowColor.replace('#', '0xff') : '0';
-        sceneFunctions += `  drawWeatherBrief(${wt.x}, ${wt.y}, ${wt.width}, ${wt.height}, ${wt.color.replace('#', '0xff')}, ${wt.fontSize}, ${wt.shadow ? 'true' : 'false'}, ${shadowColHex}, "${wt.scrollEffect || 'none'}", ${(wt as any).scrollSpeed || 4}, ${wt.fontFamily === 'bold' ? 'true' : 'false'});\n`;
+        sceneFunctions += `  drawWeatherBrief(${wt.x}, ${wt.y}, ${wt.width}, ${wt.height}, ${wt.color.replace('#', '0xff')}, ${wt.fontSize}, ${wt.shadow ? 'true' : 'false'}, ${shadowColHex}, "${wt.scrollEffect || 'none'}", ${(wt as any).scrollSpeed || 4}, ${wt.fontFamily === 'bold' ? 'true' : 'false'}, ${wt.rainbow ? 'true' : 'false'});\n`;
       }
       else if (w.type === 'youtube-sub') {
         const yt = w as any;
@@ -314,7 +314,7 @@ export function generateArduinoCode(options: CodeGenOptions): string {
         const textY = yt.textY !== undefined ? yt.textY : 0;
         const colorHex = yt.color.replace('#', '0xff');
         const shadowColHex = yt.shadowColorMode === 'custom' ? yt.shadowColor.replace('#', '0xff') : '0';
-        sceneFunctions += `  drawYouTubeSub(${yt.x}, ${yt.y}, ${yt.width}, ${yt.height}, ${textX}, ${textY}, ${colorHex}, ${yt.fontSize}, ${yt.shadow ? 'true' : 'false'}, ${shadowColHex}, "${yt.scrollEffect || 'none'}", ${(yt as any).scrollSpeed || 4}, ${yt.fontFamily === 'bold' ? 'true' : 'false'}, "${yt.format || 'short'}");\n`;
+        sceneFunctions += `  drawYouTubeSub(${yt.x}, ${yt.y}, ${yt.width}, ${yt.height}, ${textX}, ${textY}, ${colorHex}, ${yt.fontSize}, ${yt.shadow ? 'true' : 'false'}, ${shadowColHex}, "${yt.scrollEffect || 'none'}", ${(yt as any).scrollSpeed || 4}, ${yt.fontFamily === 'bold' ? 'true' : 'false'}, "${yt.format || 'short'}", ${yt.rainbow ? 'true' : 'false'});\n`;
       }
       else if (w.type === 'clock') {
         const ck = w as any;
@@ -344,14 +344,14 @@ export function generateArduinoCode(options: CodeGenOptions): string {
       else if (w.type === 'timer') {
         const timer = w;
         const shadowColHex = timer.shadowColorMode === 'custom' ? timer.shadowColor.replace('#', '0xff') : '0';
-        sceneFunctions += `  drawTimer(${timer.x}, ${timer.y}, ${timer.width}, ${timer.height}, ${timer.color.replace('#', '0xff')}, ${timer.fontSize}, ${timer.shadow ? 'true' : 'false'}, ${shadowColHex}, "${timer.scrollEffect || 'none'}", ${(timer as any).scrollSpeed || 4}, ${timer.fontFamily === 'bold' ? 'true' : 'false'});\n`;
+        sceneFunctions += `  drawTimer(${timer.x}, ${timer.y}, ${timer.width}, ${timer.height}, ${timer.color.replace('#', '0xff')}, ${timer.fontSize}, ${timer.shadow ? 'true' : 'false'}, ${shadowColHex}, "${timer.scrollEffect || 'none'}", ${(timer as any).scrollSpeed || 4}, ${timer.fontFamily === 'bold' ? 'true' : 'false'}, ${(timer as any).rainbow ? 'true' : 'false'});\n`;
       }
       else if (w.type === 'counter') {
         const counter = w as any;
         const colorHex = counter.color.replace('#', '0xff');
         const shadowColHex = counter.shadowColorMode === 'custom' ? counter.shadowColor.replace('#', '0xff') : '0';
         const varName = getCounterVarName(w.id);
-        sceneFunctions += `  drawCounter(${varName}, ${counter.x}, ${counter.y}, ${counter.width}, ${counter.height}, ${colorHex}, ${counter.fontSize}, ${counter.shadow ? 'true' : 'false'}, ${shadowColHex}, "${counter.scrollEffect || 'none'}", ${(counter as any).scrollSpeed || 4}, ${counter.fontFamily === 'bold' ? 'true' : 'false'});\n`;
+        sceneFunctions += `  drawCounter(${varName}, ${counter.x}, ${counter.y}, ${counter.width}, ${counter.height}, ${colorHex}, ${counter.fontSize}, ${counter.shadow ? 'true' : 'false'}, ${shadowColHex}, "${counter.scrollEffect || 'none'}", ${(counter as any).scrollSpeed || 4}, ${counter.fontFamily === 'bold' ? 'true' : 'false'}, ${counter.rainbow ? 'true' : 'false'});\n`;
       }
       else if (w.type === 'animation') {
         const anim = w;
@@ -651,7 +651,7 @@ void checkEncoder();
 void checkButton();
 void updateWeather();
 void updateYouTubeSubscribers();
-void drawYouTubeSub(int x, int y, int w, int h, int textX, int textY, uint32_t color, int size, bool shadow, uint32_t shadowColor, String effect, int speed, bool bold = false, String format = "short");
+void drawYouTubeSub(int x, int y, int w, int h, int textX, int textY, uint32_t color, int size, bool shadow, uint32_t shadowColor, String effect, int speed, bool bold = false, String format = "short", bool rainbow = false);
 void handleSerialCommands();
 void handleWiFiFrames();
 String getWebSocketAcceptKey(String clientKey);
@@ -661,20 +661,20 @@ void setPixel(int x, int y, uint8_t r, uint8_t g, uint8_t b, int opacity = 100);
 void setPixel(int x, int y, uint32_t color, int opacity = 100);
 void drawSolidBackground(uint32_t color, int opacity = 100);
 void drawGradientBackground(uint32_t color1, uint32_t color2, int opacity = 100);
-void drawText(String txt, int x, int y, int w, int h, uint32_t color, int size, bool shadow, uint32_t shadowColor, String effect, int speed, bool bold = false);
-void drawText(String txt, int x, int y, uint32_t color, int size, bool shadow, uint32_t shadowColor, int scrollOffset, bool bold = false);
+void drawText(String txt, int x, int y, int w, int h, uint32_t color, int size, bool shadow, uint32_t shadowColor, String effect, int speed, bool bold = false, bool rainbow = false);
+void drawText(String txt, int x, int y, uint32_t color, int size, bool shadow, uint32_t shadowColor, int scrollOffset, bool bold = false, bool rainbow = false);
 
 void drawSticker(const uint32_t* sticker, int x, int y, int w, int h, String motion, int speed);
-void drawLocalTime(int x, int y, int w, int h, uint32_t color, int size, String format, bool shadow = false, uint32_t shadowColor = 0, String effect = "none", int speed = 4, bool bold = false);
-void drawLocalDate(int x, int y, int w, int h, uint32_t color, int size, String format, bool shadow = false, uint32_t shadowColor = 0, String effect = "none", int speed = 4, bool bold = false);
+void drawLocalTime(int x, int y, int w, int h, uint32_t color, int size, String format, bool shadow = false, uint32_t shadowColor = 0, String effect = "none", int speed = 4, bool bold = false, bool rainbow = false);
+void drawLocalDate(int x, int y, int w, int h, uint32_t color, int size, String format, bool shadow = false, uint32_t shadowColor = 0, String effect = "none", int speed = 4, bool bold = false, bool rainbow = false);
 void drawWeatherSticker(int sx, int sy, String condition);
 void drawWeather(int x, int y, int w, int h, String param, int iconX = 2, int iconY = 0, int tempX = 22, int tempY = 0, int humiX = 58, int humiY = 0, int briefX = 22, int briefY = 8, String tempColorMode = "followBrief", uint32_t tempColor = 0xfffacc15, bool tempBold = false, int tempSize = 1, bool tempShadow = false, uint32_t tempShadowColor = 0, String humiColorMode = "followBrief", uint32_t humiColor = 0xff94a3b8, bool humiBold = false, int humiSize = 1, bool humiShadow = false, uint32_t humiShadowColor = 0, String briefColorMode = "followBrief", uint32_t briefColor = 0xffffffff, bool briefBold = true, int briefSize = 1, bool briefShadow = false, uint32_t briefShadowColor = 0);
-void drawWeatherTemp(int x, int y, int w, int h, uint32_t color, int size, bool shadow = false, uint32_t shadowColor = 0, String effect = "none", int speed = 4, bool bold = false);
-void drawWeatherHumi(int x, int y, int w, int h, uint32_t color, int size, bool shadow = false, uint32_t shadowColor = 0, String effect = "none", int speed = 4, bool bold = false);
-void drawWeatherBrief(int x, int y, int w, int h, uint32_t color, int size, bool shadow = false, uint32_t shadowColor = 0, String effect = "none", int speed = 4, bool bold = false);
+void drawWeatherTemp(int x, int y, int w, int h, uint32_t color, int size, bool shadow = false, uint32_t shadowColor = 0, String effect = "none", int speed = 4, bool bold = false, bool rainbow = false);
+void drawWeatherHumi(int x, int y, int w, int h, uint32_t color, int size, bool shadow = false, uint32_t shadowColor = 0, String effect = "none", int speed = 4, bool bold = false, bool rainbow = false);
+void drawWeatherBrief(int x, int y, int w, int h, uint32_t color, int size, bool shadow = false, uint32_t shadowColor = 0, String effect = "none", int speed = 4, bool bold = false, bool rainbow = false);
 void drawClock(int x, int y, int w, int h, uint32_t color, int size, String timeOfDayOverride = "auto", bool shadow = true, uint32_t shadowColor = 0, bool bold = true, int bgX = 10, int bgY = 8, int dateX = 24, int dateY = 0, int timeX = 24, int timeY = 8, String dateFormat = "DD MMM", String timeFormat = "HH:MM AM/PM", uint32_t dateColor = 0xFFFFFF, uint32_t timeColor = 0xFFFFFF, bool dateBold = false, bool timeBold = true, int dateSize = 1, int timeSize = 1, bool dateShadow = true, bool timeShadow = true, uint32_t dateShadowColor = 0, uint32_t timeShadowColor = 0, String dateColorMode = "custom", String timeColorMode = "custom");
-void drawTimer(int x, int y, int w, int h, uint32_t color, int size, bool shadow = false, uint32_t shadowColor = 0, String effect = "none", int speed = 4, bool bold = false);
-void drawCounter(long count, int x, int y, int w, int h, uint32_t color, int size, bool shadow = false, uint32_t shadowColor = 0, String effect = "none", int speed = 4, bool bold = false);
+void drawTimer(int x, int y, int w, int h, uint32_t color, int size, bool shadow = false, uint32_t shadowColor = 0, String effect = "none", int speed = 4, bool bold = false, bool rainbow = false);
+void drawCounter(long count, int x, int y, int w, int h, uint32_t color, int size, bool shadow = false, uint32_t shadowColor = 0, String effect = "none", int speed = 4, bool bold = false, bool rainbow = false);
 void drawPrebuiltAnimation(String animId, int x, int y, int opacity = 100, int bgX = 10, int bgY = 8);
 void drawBackgroundPixels(const uint32_t* bg, int x, int y, int w, int h, int opacity = 100);
 void drawCustomAnimation(const uint32_t* const* frames, int framesCount, int x, int y, int w, int h, int frameRate, int opacity = 100);
@@ -1623,7 +1623,7 @@ void drawGradientBackground(uint32_t color1, uint32_t color2, int opacity) {
   }
 }
 
-void drawText(String txt, int x, int y, int w, int h, uint32_t color, int size, bool shadow, uint32_t shadowColor, String effect, int speed, bool bold) {
+void drawText(String txt, int x, int y, int w, int h, uint32_t color, int size, bool shadow, uint32_t shadowColor, String effect, int speed, bool bold, bool rainbow) {
   int charWidth = (size == 0) ? 3 : 5 * size;
   int charHeight = (size == 0) ? 5 : 8 * size;
   int charSpacing = (size == 0) ? 1 : 1 * size;
@@ -1763,9 +1763,18 @@ void drawText(String txt, int x, int y, int w, int h, uint32_t color, int size, 
             int px = startX + (int)(col * abs(cosTheta));
             int py = charScrollY + row;
             if (px >= x && px < x + w && py >= y && py < y + h) {
-              setPixel(px, py, finalR, finalG, finalB, finalOpacity);
-              if (bold) {
-                setPixel(px + 1, py, finalR, finalG, finalB, finalOpacity);
+              if (rainbow) {
+                uint16_t hue = ((int)(tick * 8 + px * 4) % 360) * 65535 / 360;
+                uint32_t rbColor = matrix.ColorHSV(hue, 255, 255);
+                setPixel(px, py, rbColor, finalOpacity);
+                if (bold) {
+                  setPixel(px + 1, py, rbColor, finalOpacity);
+                }
+              } else {
+                setPixel(px, py, finalR, finalG, finalB, finalOpacity);
+                if (bold) {
+                  setPixel(px + 1, py, finalR, finalG, finalB, finalOpacity);
+                }
               }
             }
           }
@@ -1868,9 +1877,18 @@ void drawText(String txt, int x, int y, int w, int h, uint32_t color, int size, 
             int px = startX + (int)(cx * abs(cosTheta));
             int py = charScrollY + cy;
             if (px >= x && px < x + w && py >= y && py < y + h) {
-              setPixel(px, py, finalR, finalG, finalB, finalOpacity);
-              if (bold) {
-                setPixel(px + 1, py, finalR, finalG, finalB, finalOpacity);
+              if (rainbow) {
+                uint16_t hue = ((int)(tick * 8 + px * 4) % 360) * 65535 / 360;
+                uint32_t rbColor = matrix.ColorHSV(hue, 255, 255);
+                setPixel(px, py, rbColor, finalOpacity);
+                if (bold) {
+                  setPixel(px + 1, py, rbColor, finalOpacity);
+                }
+              } else {
+                setPixel(px, py, finalR, finalG, finalB, finalOpacity);
+                if (bold) {
+                  setPixel(px + 1, py, finalR, finalG, finalB, finalOpacity);
+                }
               }
             }
           }
@@ -1880,8 +1898,8 @@ void drawText(String txt, int x, int y, int w, int h, uint32_t color, int size, 
     }
   }
 }
-void drawText(String txt, int x, int y, uint32_t color, int size, bool shadow, uint32_t shadowColor, int scrollOffset, bool bold) {
-  drawText(txt, x + scrollOffset, y, MATRIX_WIDTH, MATRIX_HEIGHT, color, size, shadow, shadowColor, "none", 4, bold);
+void drawText(String txt, int x, int y, uint32_t color, int size, bool shadow, uint32_t shadowColor, int scrollOffset, bool bold, bool rainbow) {
+  drawText(txt, x + scrollOffset, y, MATRIX_WIDTH, MATRIX_HEIGHT, color, size, shadow, shadowColor, "none", 4, bold, rainbow);
 }
 
 void drawSticker(const uint32_t* sticker, int x, int y, int w, int h, String motion, int speed) {
@@ -2008,15 +2026,15 @@ void drawCustomAnimation(const uint32_t* const* frames, int framesCount, int x, 
   drawBackgroundPixels(frame, x, y, w, h, opacity);
 }
 
-void drawLocalTime(int x, int y, int w, int h, uint32_t color, int size, String format, bool shadow, uint32_t shadowColor, String effect, int speed, bool bold) {
+void drawLocalTime(int x, int y, int w, int h, uint32_t color, int size, String format, bool shadow, uint32_t shadowColor, String effect, int speed, bool bold, bool rainbow) {
   String text = timeClient.getFormattedTime();
   if (format == "HH:MM") {
     text = text.substring(0, 5);
   }
-  drawText(text, x, y, w, h, color, size, shadow, shadowColor, effect, speed, bold);
+  drawText(text, x, y, w, h, color, size, shadow, shadowColor, effect, speed, bold, rainbow);
 }
 
-void drawLocalDate(int x, int y, int w, int h, uint32_t color, int size, String format, bool shadow, uint32_t shadowColor, String effect, int speed, bool bold) {
+void drawLocalDate(int x, int y, int w, int h, uint32_t color, int size, String format, bool shadow, uint32_t shadowColor, String effect, int speed, bool bold, bool rainbow) {
   time_t rawtime = timeClient.getEpochTime();
   struct tm * ti;
   ti = localtime(&rawtime);
@@ -2033,21 +2051,21 @@ void drawLocalDate(int x, int y, int w, int h, uint32_t color, int size, String 
   } else {
     sprintf(dateStr, "%02d/%02d/%04d", ti->tm_mday, ti->tm_mon + 1, ti->tm_year + 1900);
   }
-  drawText(dateStr, x, y, w, h, color, size, shadow, shadowColor, effect, speed, bold);
+  drawText(dateStr, x, y, w, h, color, size, shadow, shadowColor, effect, speed, bold, rainbow);
 }
 
-void drawTimer(int x, int y, int w, int h, uint32_t color, int size, bool shadow, uint32_t shadowColor, String effect, int speed, bool bold) {
+void drawTimer(int x, int y, int w, int h, uint32_t color, int size, bool shadow, uint32_t shadowColor, String effect, int speed, bool bold, bool rainbow) {
   int mins = countdownSeconds / 60;
   int secs = countdownSeconds % 60;
   char timeStr[10];
   sprintf(timeStr, "%02d:%02d", mins, secs);
-  drawText(timeStr, x, y, w, h, color, size, shadow, shadowColor, effect, speed, bold);
+  drawText(timeStr, x, y, w, h, color, size, shadow, shadowColor, effect, speed, bold, rainbow);
 }
 
-void drawCounter(long count, int x, int y, int w, int h, uint32_t color, int size, bool shadow, uint32_t shadowColor, String effect, int speed, bool bold) {
+void drawCounter(long count, int x, int y, int w, int h, uint32_t color, int size, bool shadow, uint32_t shadowColor, String effect, int speed, bool bold, bool rainbow) {
   char countStr[32];
   sprintf(countStr, "%ld", count);
-  drawText(countStr, x, y, w, h, color, size, shadow, shadowColor, effect, speed, bold);
+  drawText(countStr, x, y, w, h, color, size, shadow, shadowColor, effect, speed, bold, rainbow);
 }
 
 void drawWeatherSticker(int sx, int sy, String condition) {
@@ -2314,7 +2332,7 @@ String formatYouTubeCount(long count, String format) {
   return String(count);
 }
 
-void drawYouTubeSub(int x, int y, int w, int h, int textX, int textY, uint32_t color, int size, bool shadow, uint32_t shadowColor, String effect, int speed, bool bold, String format) {
+void drawYouTubeSub(int x, int y, int w, int h, int textX, int textY, uint32_t color, int size, bool shadow, uint32_t shadowColor, String effect, int speed, bool bold, String format, bool rainbow) {
   // Clear bounding box
   for (int py = 0; py < h; py++) {
     for (int px = 0; px < w; px++) {
@@ -2324,7 +2342,7 @@ void drawYouTubeSub(int x, int y, int w, int h, int textX, int textY, uint32_t c
 
   // Format and draw count text
   String countText = formatYouTubeCount(ytSubscriberCount, format);
-  drawText(countText, x + textX, y + textY, w - textX, h, color, size, shadow, shadowColor, effect, speed, bold);
+  drawText(countText, x + textX, y + textY, w - textX, h, color, size, shadow, shadowColor, effect, speed, bold, rainbow);
 }
 
 void drawClock(int x, int y, int w, int h, uint32_t color, int size, String timeOfDayOverride, bool shadow, uint32_t shadowColor, bool bold, int bgX, int bgY, int dateX, int dateY, int timeX, int timeY, String dateFormat, String timeFormat, uint32_t dateColor, uint32_t timeColor, bool dateBold, bool timeBold, int dateSize, int timeSize, bool dateShadow, bool timeShadow, uint32_t dateShadowColor, uint32_t timeShadowColor, String dateColorMode, String timeColorMode) {
@@ -4624,19 +4642,19 @@ void drawPrebuiltAnimation(String animId, int x, int y, int opacity, int bgX, in
 
 }
 
-void drawWeatherTemp(int x, int y, int w, int h, uint32_t color, int size, bool shadow, uint32_t shadowColor, String effect, int speed, bool bold) {
+void drawWeatherTemp(int x, int y, int w, int h, uint32_t color, int size, bool shadow, uint32_t shadowColor, String effect, int speed, bool bold, bool rainbow) {
   String tempStr = String(weatherTemp, 1) + "C";
-  drawText(tempStr, x, y, w, h, color, size, shadow, shadowColor, effect, speed, bold);
+  drawText(tempStr, x, y, w, h, color, size, shadow, shadowColor, effect, speed, bold, rainbow);
 }
 
-void drawWeatherHumi(int x, int y, int w, int h, uint32_t color, int size, bool shadow, uint32_t shadowColor, String effect, int speed, bool bold) {
+void drawWeatherHumi(int x, int y, int w, int h, uint32_t color, int size, bool shadow, uint32_t shadowColor, String effect, int speed, bool bold, bool rainbow) {
   String humiStr = String(weatherHumidity) + "%";
-  drawText(humiStr, x, y, w, h, color, size, shadow, shadowColor, effect, speed, bold);
+  drawText(humiStr, x, y, w, h, color, size, shadow, shadowColor, effect, speed, bold, rainbow);
 }
 
-void drawWeatherBrief(int x, int y, int w, int h, uint32_t color, int size, bool shadow, uint32_t shadowColor, String effect, int speed, bool bold) {
+void drawWeatherBrief(int x, int y, int w, int h, uint32_t color, int size, bool shadow, uint32_t shadowColor, String effect, int speed, bool bold, bool rainbow) {
   String briefStr = weatherDesc;
-  drawText(briefStr, x, y, w, h, color, size, shadow, shadowColor, effect, speed, bold);
+  drawText(briefStr, x, y, w, h, color, size, shadow, shadowColor, effect, speed, bold, rainbow);
 }
 `;
 }
